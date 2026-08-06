@@ -228,6 +228,18 @@ export default function App() {
     return unsubscribe;
   }, []);
 
+  // Handle browser back button - prevent navigation to other websites
+  useEffect(() => {
+    const handlePopState = () => {
+      // Reset to dashboard view when browser back button is pressed
+      setEditingAssessmentId(null);
+      setViewingAssessmentId(null);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   // Sync to storage (now Firestore if logged in, localStorage otherwise)
   const syncToStorage = async (updated: RiskAssessment[]) => {
     setAssessments(updated);
