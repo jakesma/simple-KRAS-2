@@ -230,10 +230,16 @@ export default function App() {
 
   // Handle browser back button - prevent navigation to other websites
   useEffect(() => {
+    // Initialize history state
+    window.history.pushState({ view: 'dashboard' }, '', window.location.href);
+
     const handlePopState = () => {
       // Reset to dashboard view when browser back button is pressed
       setEditingAssessmentId(null);
       setViewingAssessmentId(null);
+      
+      // Push dashboard state back to history to prevent back navigation to other sites
+      window.history.pushState({ view: 'dashboard' }, '', window.location.href);
     };
 
     window.addEventListener('popstate', handlePopState);
