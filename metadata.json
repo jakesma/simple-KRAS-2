@@ -1,0 +1,6 @@
+{
+  "name": "KRAS 제조업 위험성평가 생성기",
+  "description": "KOSHA KRAS 표준 규격을 준수하며 마법사 입력을 통해 5종의 제조업 안전 위험성평가 문서를 자동 생성하고 추적하는 B2B 안전 관리 솔루션",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
