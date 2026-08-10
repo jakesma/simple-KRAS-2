@@ -199,15 +199,18 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 sm:p-12 print:border-none print:shadow-none print:p-0 print:text-black">
           
           {/* Document Common Title Header */}
-          <div className="text-center border-b-4 border-double border-slate-900 pb-6 mb-8" id="sheet-title-header">
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+          <div className="text-center border-b-4 border-double border-slate-900 pb-4 mb-8" id="sheet-title-header">
+            <p className="text-xs font-semibold text-slate-700 mb-1.5 print:text-slate-600 tracking-wide">
+              SIMPLE KRAS - AI 위험성평가 시스템
+            </p>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase mb-1">
               {activeTab === 'survey' && '안 전 보 건 정 보 사 전 조 사 서'}
               {activeTab === 'hazard' && '유 해 · 위 험 요 인 파 악 표'}
               {activeTab === 'estimation' && '위 험 성 추 정 및 결 정 서'}
               {activeTab === 'reduction' && '위 험 감 소 대 책 실 행 계 획 서'}
               {activeTab === 'kras' && 'KRAS 표 준 위 험 성 평 가 표'}
             </h1>
-            <p className="text-xs text-slate-500 mt-1 font-mono print:text-slate-700">
+            <p className="text-[11px] text-slate-500 print:text-slate-600 font-medium">
               한국산업안전보건공단 KRAS(위험성평가) 표준 규격 연동 고시 서식
             </p>
           </div>
@@ -226,12 +229,11 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
 
             {/* Right Standard Korean Approval Box */}
             <div className="flex justify-end" id="approval-box-wrapper">
-              <table className="border-collapse border border-slate-900 text-[10px] text-center w-64">
+              <table className="border-collapse border border-slate-900 text-[10px] text-center w-56">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-900">
                     <th rowSpan={2} className="border-r border-slate-900 w-10 font-bold p-1">결재</th>
                     <th className="border-r border-slate-900 p-1 font-medium">작성자 (안전인)</th>
-                    <th className="border-r border-slate-900 p-1 font-medium">관리감독자</th>
                     <th className="p-1 font-medium">승인자 (대표이사)</th>
                   </tr>
                 </thead>
@@ -240,9 +242,6 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                     <td className="border-r border-slate-900 bg-slate-50 p-1 font-bold text-slate-500">서명</td>
                     <td className="border-r border-slate-900 p-1 text-slate-400 italic">
                       {assessment.companyProfile.siteManager || '인'}
-                    </td>
-                    <td className="border-r border-slate-900 p-1 text-slate-400 italic">
-                      {assessment.processes[0]?.supervisor || '인'}
                     </td>
                     <td className="p-1 text-slate-400 italic">
                       {assessment.status === 'approved' || assessment.status === 'completed' ? (
@@ -254,7 +253,6 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                   </tr>
                   <tr className="border-t border-slate-900">
                     <td className="border-r border-slate-900 bg-slate-50 p-1 font-bold text-slate-500">일자</td>
-                    <td className="border-r border-slate-900 p-1 font-mono text-[9px]">{assessment.createdAt}</td>
                     <td className="border-r border-slate-900 p-1 font-mono text-[9px]">{assessment.createdAt}</td>
                     <td className="p-1 font-mono text-[9px]">
                       {assessment.status === 'approved' || assessment.status === 'completed' ? assessment.updatedAt : '-'}

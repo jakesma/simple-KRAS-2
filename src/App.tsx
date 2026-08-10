@@ -10,6 +10,7 @@ import AssessmentForm from './components/AssessmentForm';
 import DocumentViewer from './components/DocumentViewer';
 import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
+import PaymentPage from './components/PaymentPage';
 import { EXPERT_PROCESS_TEMPLATES } from './data/expertDatabase';
 import { ShieldCheck, Layers, Info, LogOut } from 'lucide-react';
 import { onAuthStateChanged, getCurrentUser, logOut, AuthUser } from './config/auth';
@@ -159,6 +160,11 @@ export default function App() {
   const [assessments, setAssessments] = useState<RiskAssessment[]>([]);
   const [editingAssessmentId, setEditingAssessmentId] = useState<string | null>(null);
   const [viewingAssessmentId, setViewingAssessmentId] = useState<string | null>(null);
+  
+  // Payment state
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState(35000); // Default: Pro plan monthly
+  const [paymentPlan, setPaymentPlan] = useState('Pro');
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -397,7 +403,16 @@ export default function App() {
 
   // Show landing page if not visited (regardless of login status)
   if (showLanding) {
-    return <LandingPage onStartClick={handleEnterDashboard} />;
+    return (
+      <LandingPage 
+        onStartClick={handleEnterDashboard}
+        onPaymentClick={(plan, amount) => {
+          setPaymentPlan(plan);
+          setPaymentAmount(amount);
+          setShowPayment(true);
+        }}
+      />
+    );
   }
 
   // Show auth page only if user explicitly tries to save (not here anymore)
@@ -478,7 +493,18 @@ export default function App() {
 
       {/* Main Body Content Switcher */}
       <main className="flex-1" id="app-main-content">
-        {activeViewing ? (
+        {showPayment ? (
+          <PaymentPage
+            amount={paymentAmount}
+            description={`SIMPLE KRAS ${paymentPlan} 플랜 월간 구독료`}
+            onSuccess={() => {
+              setShowPayment(false);
+              // 결제 성공 후 처리 로직
+              console.log('결제 완료:', paymentPlan, paymentAmount);
+            }}
+            onCancel={() => setShowPayment(false)}
+          />
+        ) : activeViewing ? (
           <DocumentViewer
             assessment={activeViewing}
             onBack={() => setViewingAssessmentId(null)}

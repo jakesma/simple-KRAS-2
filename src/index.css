@@ -27,3 +27,51 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #CBD5E1;
 }
+
+/* Print styles for title and approval table */
+@media print {
+  /* Title header alignment and spacing */
+  #sheet-title-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+  
+  #sheet-title-header p:first-child {
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+  
+  #sheet-title-header h1 {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  
+  #sheet-title-header p:last-child {
+    font-size: 10px;
+    margin: 0;
+  }
+  
+  /* Approval box table optimization */
+  #approval-box-wrapper table {
+    font-size: 9px;
+  }
+  
+  #approval-box-wrapper table th {
+    white-space: nowrap;
+    padding: 2px 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  #approval-box-wrapper table tr:first-child {
+    height: auto;
+    min-height: 28px;
+  }
+  
+  #approval-box-wrapper table td {
+    padding: 2px 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+  }
+}

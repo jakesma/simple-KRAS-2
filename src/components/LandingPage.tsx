@@ -2,9 +2,10 @@ import { ArrowRight, CheckCircle2, Zap, BarChart3, FileText, Settings, Download,
 
 interface LandingPageProps {
   onStartClick: () => void;
+  onPaymentClick?: (plan: string, amount: number) => void;
 }
 
-export default function LandingPage({ onStartClick }: LandingPageProps) {
+export default function LandingPage({ onStartClick, onPaymentClick }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -357,7 +358,15 @@ export default function LandingPage({ onStartClick }: LandingPageProps) {
                     <p className="text-sm text-gray-600 mt-2">{plan.subtext}</p>
                   )}
                   <button
-                    onClick={onStartClick}
+                    onClick={() => {
+                      if (plan.name === 'FREE') {
+                        onStartClick();
+                      } else if (plan.name === 'PRO' && onPaymentClick) {
+                        onPaymentClick('Pro', 35000);
+                      } else if (plan.name === 'TEAM' && onPaymentClick) {
+                        onPaymentClick('Team', 75000);
+                      }
+                    }}
                     className={`w-full mt-8 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
                       plan.highlight
                         ? 'bg-emerald-600 text-white hover:bg-emerald-700'
