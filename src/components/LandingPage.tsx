@@ -309,11 +309,11 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
                 ]
               },
               {
-                name: 'PRO',
+                name: 'PLUS',
                 price: '₩35,000',
                 period: '/월',
-                subtext: '연 결제 시 ₩28,000/월',
-                cta: 'Pro 시작하기',
+                subtext: '',
+                cta: 'PLUS 시작하기',
                 highlight: true,
                 features: [
                   { text: '위험성평가 무제한', included: true },
@@ -325,14 +325,16 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
                 ]
               },
               {
-                name: 'TEAM',
-                price: '₩75,000',
-                period: '/월',
-                subtext: '팀원 5명 포함',
-                cta: 'Team 시작하기',
+                name: 'PRO',
+                price: '₩250,000',
+                period: '/년',
+                originalPrice: '₩420,000',
+                subtext: '연 요금 40% 할인',
+                cta: 'PRO 시작하기',
+                highlight: true,
                 features: [
-                  { text: 'Pro 모든 기능', included: true },
-                  { text: '팀원 공유', included: true },
+                  { text: 'PLUS 모든 기능', included: true },
+                  { text: '팀원 공유 (최대 5명)', included: true },
                   { text: '회사 템플릿 관리', included: true },
                   { text: '다수 현장 관리', included: true },
                   { text: '관리자 대시보드', included: true },
@@ -349,20 +351,27 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
                 <div className="p-8">
                   <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
-                    <span className="text-gray-600">{plan.period}</span>
+                    {plan.originalPrice && (
+                      <div className="mb-2">
+                        <span className="text-sm text-red-600 line-through">{plan.originalPrice}</span>
+                      </div>
+                    )}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
+                      <span className="text-gray-600">{plan.period}</span>
+                    </div>
                   </div>
                   {plan.subtext && (
-                    <p className="text-sm text-gray-600 mt-2">{plan.subtext}</p>
+                    <p className={`text-sm mt-2 ${plan.highlight ? 'text-emerald-600 font-semibold' : 'text-gray-600'}`}>{plan.subtext}</p>
                   )}
                   <button
                     onClick={() => {
                       if (plan.name === 'FREE') {
                         onStartClick();
+                      } else if (plan.name === 'PLUS' && onPaymentClick) {
+                        onPaymentClick('Plus', 35000);
                       } else if (plan.name === 'PRO' && onPaymentClick) {
-                        onPaymentClick('Pro', 35000);
-                      } else if (plan.name === 'TEAM' && onPaymentClick) {
-                        onPaymentClick('Team', 75000);
+                        onPaymentClick('Pro', 250000);
                       }
                     }}
                     className={`w-full mt-8 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
