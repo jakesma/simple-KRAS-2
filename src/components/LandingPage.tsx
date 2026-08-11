@@ -10,11 +10,9 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
     <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-white border-b border-gray-100 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
-              <ShieldAlert className="w-6 h-6 text-white" />
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <img src="/automo-logo.png" alt="AUTOMO" className="h-16 object-contain" />
             <div>
               <div className="text-xs font-semibold text-gray-500">B2B Safety Platform</div>
               <div className="text-sm font-bold text-gray-900">KRAS 위험성평가</div>
@@ -443,9 +441,7 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
-                  <ShieldAlert className="w-6 h-6 text-white" />
-                </div>
+                <img src="/automo-logo.png" alt="AUTOMO" className="h-20 object-contain" />
                 <div>
                   <div className="text-xs text-gray-400">B2B Safety Platform</div>
                   <div className="text-sm font-bold">KRAS</div>
@@ -474,16 +470,18 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">공식 홈페이지</a></li>
-                <li><a href="#" className="hover:text-white">블로그</a></li>
+                <li><a href="https://www.automosafety.co.kr/" target="_blank" rel="noopener noreferrer" className="hover:text-white">공식 홈페이지</a></li>
+                <li><a href="https://automo-safety1222.tistory.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white">블로그</a></li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-400">
-              © 2026 KRAS Generator Inc. All rights reserved.
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-400">
+                © 2026 AUTOMO SAFETY LAB Inc. All rights reserved.
+              </p>
+            </div>
             <p className="text-sm text-gray-400">
               산업안전보건법 기반 · 건설기술진흥법 준수
             </p>
