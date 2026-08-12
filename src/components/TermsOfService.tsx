@@ -29,14 +29,14 @@ export default function TermsOfService({ isOpen, onClose }: TermsOfServiceProps)
               시행일: 2026년 8월 12일
             </p>
             <p className="font-semibold mb-2">
-              본 약관은 오토보연구소(이하 "회사")가 제공하는 SIMPLE-KRAS 위험성평가 플랫폼 서비스(이하 "서비스")의 이용에 관한 기본적인 사항을 규정합니다.
+              본 약관은 오토모 연구소(이하 "회사")가 제공하는 SIMPLE-KRAS 위험성평가 플랫폼 서비스(이하 "서비스")의 이용에 관한 기본적인 사항을 규정합니다.
             </p>
           </div>
 
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-3">제1조 용어의 정의</h3>
             <div className="space-y-2 ml-4 text-gray-600">
-              <p>① "회사"는 위험성평가 서비스를 제공하는 오토보연구소를 말합니다.</p>
+              <p>① "회사"는 위험성평가 서비스를 제공하는 오토모 연구소를 말합니다.</p>
               <p>② "이용자"는 본 약관에 동의하고 서비스를 이용하는 자연인 또는 법인을 말합니다.</p>
               <p>③ "계정"은 회원가입 후 부여되는 고유의 사용자 계정을 말합니다.</p>
               <p>④ "서비스"는 SIMPLE-KRAS 위험성평가, TBM 회의록, 템플릿 등 회사가 제공하는 모든 기능을 포함합니다.</p>

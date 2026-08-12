@@ -500,7 +500,7 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
           <div className="border-t border-gray-800 pt-6 mb-6">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-xs text-gray-500">
               <div>
-                <span className="font-semibold">상호명:</span> 오토보연구소
+                <span className="font-semibold">상호명:</span> 오토모 연구소
               </div>
               <div>
                 <span className="font-semibold">사업자등록번호:</span> 485-04-03943
@@ -509,13 +509,10 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
                 <span className="font-semibold">대표자명:</span> 김계환
               </div>
               <div>
-                <span className="font-semibold">연락처:</span> 031-650-0229
+                <span className="font-semibold">연락처:</span> 01064916210
               </div>
               <div>
                 <span className="font-semibold">사업장주소:</span> 경기도 평택시 소사고로 8, 108동 804호
-              </div>
-              <div>
-                <span className="font-semibold">통신판매신고:</span> 101233794304
               </div>
             </div>
           </div>

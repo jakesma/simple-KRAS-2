@@ -29,7 +29,7 @@ export default function RefundPolicy({ isOpen, onClose }: RefundPolicyProps) {
               시행일: 2026년 8월 12일
             </p>
             <p className="font-semibold mb-2">
-              본 정책은 오토보연구소(이하 "회사")의 SIMPLE-KRAS 위험성평가 서비스 이용에 따른 환불, 취소, 반품에 관한 규정입니다.
+              본 정책은 오토모 연구소(이하 "회사")의 SIMPLE-KRAS 위험성평가 서비스 이용에 따른 환불, 취소, 반품에 관한 규정입니다.
             </p>
           </div>
 
@@ -85,7 +85,7 @@ export default function RefundPolicy({ isOpen, onClose }: RefundPolicyProps) {
               <p className="font-semibold">Step 1: 환불 신청</p>
               <ul className="list-disc list-inside space-y-1 text-gray-600 ml-2">
                 <li>마이페이지의 "구독 관리" 또는 "결제 내역"에서 환불 신청 버튼 클릭</li>
-                <li>또는 고객 지원팀(031-650-0229)에 이메일로 문의</li>
+                <li>또는 고객 지원팀(01064916210)에 이메일로 문의</li>
               </ul>
 
               <p className="font-semibold mt-3">Step 2: 환불 심사</p>
@@ -211,10 +211,10 @@ export default function RefundPolicy({ isOpen, onClose }: RefundPolicyProps) {
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-3">10. 고객 지원</h3>
             <div className="bg-gray-50 p-4 rounded-lg space-y-2 ml-4 text-gray-600">
-              <div><span className="font-semibold">전화:</span> 031-650-0229</div>
+              <div><span className="font-semibold">전화:</span> 01064916210</div>
               <div><span className="font-semibold">이메일:</span> contact@automosafety.co.kr</div>
               <div><span className="font-semibold">운영시간:</span> 평일 09:00 ~ 18:00 (점심시간 12:00 ~ 13:00)</div>
-              <div><span className="font-semibold">법인명:</span> 오토보연구소</div>
+              <div><span className="font-semibold">법인명:</span> 오토모 연구소</div>
             </div>
           </div>
 

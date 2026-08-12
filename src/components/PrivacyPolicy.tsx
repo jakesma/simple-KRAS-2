@@ -29,7 +29,7 @@ export default function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
               시행일: 2026년 8월 12일
             </p>
             <p className="font-semibold mb-2">
-              오토보연구소(이하 "회사" 또는 "당사")는 개인정보보호법, 정보통신망 이용촉진 및 정보보호 등에 관한 법률 등 관련 법령을 준수하며, 개인정보 처리에 있어 이용자의 기본적 인권을 보호합니다.
+              오토모 연구소(이하 "회사" 또는 "당사")는 개인정보보호법, 정보통신망 이용촉진 및 정보보호 등에 관한 법률 등 관련 법령을 준수하며, 개인정보 처리에 있어 이용자의 기본적 인권을 보호합니다.
             </p>
           </div>
 
@@ -141,10 +141,10 @@ export default function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-3">7. 개인정보 처리 담당자 및 담당부서</h3>
             <div className="bg-gray-50 p-4 rounded-lg space-y-2 ml-4 text-gray-600">
-              <div><span className="font-semibold">회사명:</span> 오토보연구소</div>
+              <div><span className="font-semibold">회사명:</span> 오토모 연구소</div>
               <div><span className="font-semibold">대표자:</span> 김계환</div>
               <div><span className="font-semibold">개인정보 보호책임자:</span> 김계환</div>
-              <div><span className="font-semibold">연락처:</span> 031-650-0229</div>
+              <div><span className="font-semibold">연락처:</span> 01064916210</div>
               <div><span className="font-semibold">이메일:</span> contact@automosafety.co.kr</div>
               <div><span className="font-semibold">사업장 주소:</span> 경기도 평택시 소사고로 8, 108동 804호</div>
             </div>
