@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { ArrowRight, CheckCircle2, Zap, BarChart3, FileText, Settings, Download, Users, ShieldAlert } from 'lucide-react';
+import PrivacyPolicy from './PrivacyPolicy';
 
 interface LandingPageProps {
   onStartClick: () => void;
@@ -6,6 +8,8 @@ interface LandingPageProps {
 }
 
 export default function LandingPage({ onStartClick, onPaymentClick }: LandingPageProps) {
+  const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
+  
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -481,6 +485,7 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="https://www.automosafety.co.kr/" target="_blank" rel="noopener noreferrer" className="hover:text-white">공식 홈페이지</a></li>
                 <li><a href="https://automo-safety1222.tistory.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white">블로그</a></li>
+                <li><button onClick={() => setIsPrivacyPolicyOpen(true)} className="hover:text-white text-left">개인정보 처리 방침</button></li>
               </ul>
             </div>
           </div>
@@ -521,6 +526,12 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
           </div>
         </div>
       </footer>
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicy 
+        isOpen={isPrivacyPolicyOpen} 
+        onClose={() => setIsPrivacyPolicyOpen(false)} 
+      />
     </div>
   );
 }
