@@ -19,6 +19,7 @@ export type HazardCategory =
   | 'Mechanical' // 기계적 위험
   | 'Electrical' // 전기적 위험
   | 'Chemical' // 화학적 위험
+  | 'Thermal' // 열/화상 위험
   | 'FireExplosion' // 화재·폭발 위험
   | 'Ergonomic' // 근골격계/인간공학적 위험
   | 'Physical' // 물리적 위험 (소음, 진동 등)

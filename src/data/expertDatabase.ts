@@ -15,7 +15,28 @@ export const EXPERT_MACHINERY_LIST = [
   '스프레이 도장 건 (Spray Painting Gun)',
   '혼합기 / 교반기 (Industrial Mixer)',
   '컨베이어 벨트 (Conveyor Belt)',
-  '가스 연소기 / 열처리로 (Heat Treatment Furnace)'
+  '가스 연소기 / 열처리로 (Heat Treatment Furnace)',
+  // 전기로 세부 종류
+  '진공열처리로 (Vacuum Heat Treatment Furnace)',
+  '소둔로 (Annealing Furnace)',
+  '템퍼링로 (Tempering Furnace)',
+  '극저온처리기 (Cryogenic Treatment Unit)',
+  '유도 가열 로 (Induction Furnace)',
+  '전기저항로 (Electric Resistance Furnace)',
+  // 기타 제조장비
+  'CNC 머신 (CNC Machine)',
+  '유압 프레스 (Hydraulic Press)',
+  '로봇 팔 / 산업용 로봇 (Industrial Robot)',
+  '자동 조립 기계 (Automatic Assembly Machine)',
+  '샌딩 머신 (Sanding Machine)',
+  '포장 기계 (Packaging Machine)',
+  '측정 장비 / 좌표측정기 (Coordinate Measuring Machine)',
+  '초음파 세척기 (Ultrasonic Cleaner)',
+  '전원공급 장치 (Power Supply Unit)',
+  '펌프 / 모터 (Pump & Motor)',
+  '흄 제거 장치 (Fume Extraction System)',
+  '증기 보일러 (Steam Boiler)',
+  '압축기 (Air Compressor)'
 ];
 
 export const EXPERT_PROCESS_TEMPLATES = [
@@ -188,6 +209,159 @@ export const EXPERT_PROCESS_TEMPLATES = [
         reductionMeasures: '안전벨트 미착용 시 시동 제한 시스템 도입, 지게차 자격 보유자 전용 운행, 급회전 금지 및 노면 평탄화',
         suggestedLikelihood: 2,
         suggestedSeverity: 5
+      }
+    ]
+  },
+  {
+    processName: '금속 진공열처리 공정',
+    detailedWorkContent: '진공열처리로에 금속 부품을 장입하여 고온 가열(800~1000°C)한 후 불활성 가스 분위기에서 냉각하는 진공 열처리 공정',
+    equipmentUsed: ['진공열처리로 (Vacuum Heat Treatment Furnace)', '천장 크레인 / 호이스트 (Overhead Crane)'],
+    chemicalsUsed: ['질소 가스 (N2)', '아르곤 가스 (Ar)', '냉각수'],
+    hazards: [
+      {
+        machineryRelated: '진공열처리로 (Vacuum Heat Treatment Furnace)',
+        hazardCategory: 'Thermal' as HazardCategory,
+        accidentType: '화상 (Burn)',
+        hazardSituation: '진공열처리로 온도가 800~1000°C에 달하는 고열 상태에서, 로 문을 개방할 때 방사열 및 대류열에 의해 얼굴과 신체가 화상을 입음',
+        legalBasis: '산업안전보건기준에 관한 규칙 제232조 (고온물체에 의한 화상 방지)',
+        currentSafetyMeasures: '원거리 조작용 로드(Long Rod) 사용',
+        reductionMeasures: '로 문 개방 시 안전 거리 2m 확보 및 반사 방열판 설치, 로 온도 시스템 자동 제어 및 알람 기능, 방열 차단막(Thermal Barrier) 부스 구축, 내열성 작업복 및 안면 보호구 지급',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 4
+      },
+      {
+        machineryRelated: '진공열처리로 (Vacuum Heat Treatment Furnace)',
+        hazardCategory: 'Electrical' as HazardCategory,
+        accidentType: '감전 (Electric Shock)',
+        hazardSituation: '진공열처리로의 고전압 히터(380V, 3상) 배선 절연 손상 상태에서 누전이 발생하여 수동 조작 중 감전사고 발생',
+        legalBasis: '산업안전보건기준에 관한 규칙 제302조 (전기 기계·기구의 접지)',
+        currentSafetyMeasures: '단순 육안 점검 및 보호 접지',
+        reductionMeasures: '고전압 배선 정기 절연 저항값 측정(1,000V 이상), 고감도 누전차단기(30mA, 0.03초) 설치, 절연 장갑 및 절연 신발 제공',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 4
+      },
+      {
+        machineryRelated: '진공열처리로 (Vacuum Heat Treatment Furnace)',
+        hazardCategory: 'Chemical' as HazardCategory,
+        accidentType: '질식 (Asphyxiation)',
+        hazardSituation: '진공 배기 시스템 고장으로 로 내 질소 및 아르곤 가스가 실내에 누적되어, 산소 결핍 환경에서 작업자가 질식 위험에 처함',
+        legalBasis: '산업안전보건기준에 관한 규칙 제632조 (산소결핍위험장소의 작업)',
+        currentSafetyMeasures: '주기적인 환기',
+        reductionMeasures: '불활성 가스 누출 감지기(산소 20% 이하 자동 경보) 설치, 연속 배기 흡입 시스템 가동, 밀폐공간 진입 절차 준수 및 송기마스크 지급',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 5
+      }
+    ]
+  },
+  {
+    processName: '금속 소둔 및 템퍼링 열처리 공정',
+    detailedWorkContent: '소둔로에서 강재를 천천히 가열(600~850°C)한 후 서냉하는 열처리와, 템퍼링로에서 담금질된 부품을 중온(200~600°C)으로 가열하는 공정',
+    equipmentUsed: ['소둔로 (Annealing Furnace)', '템퍼링로 (Tempering Furnace)', '천장 크레인 / 호이스트 (Overhead Crane)'],
+    chemicalsUsed: ['냉각수', '냉동유', '가스 연료 (LPG/LNG)'],
+    hazards: [
+      {
+        machineryRelated: '소둔로 (Annealing Furnace)',
+        hazardCategory: 'Thermal' as HazardCategory,
+        accidentType: '화상 (Burn)',
+        hazardSituation: '소둔로 표면 온도가 100°C 이상의 상태에서, 작업자가 로 몸체에 접촉하거나 로드로 취급된 가열 부품에 직접 접촉하여 광범위한 화상을 입음',
+        legalBasis: '산업안전보건기준에 관한 규칙 제232조 (고온물체에 의한 화상 방지)',
+        currentSafetyMeasures: '장갑 착용 및 거리 유지',
+        reductionMeasures: '로 표면 방열 단열재 및 금속 보호 케이싱 설치, 뜨거운 부품 취급용 특수 집게(Tongs) 제공, 화상 응급 처치 구급약품 및 훈련',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 3
+      },
+      {
+        machineryRelated: '소둔로 (Annealing Furnace)',
+        hazardCategory: 'FireExplosion' as HazardCategory,
+        accidentType: '화재·폭발 (Fire/Explosion)',
+        hazardSituation: '가스 연료(LPG/LNG) 공급 배관 누수로 실내에 가연성 가스가 누적되다가 로의 착화점에서 폭발하여 로실과 주변을 파괴함',
+        legalBasis: '산업안전보건기준에 관한 규칙 제241조 (통풍 등이 충분하지 않은 장소에서의 화재예방)',
+        currentSafetyMeasures: '가스 누출 감시(육안)',
+        reductionMeasures: '가스 배관 정기 누누설 검사(비눗물 시험 주 1회), 가스 누출 감지 자동 센서 및 차단 밸브 설치, 작업실 환기 시스템 상시 가동',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 5
+      },
+      {
+        machineryRelated: '템퍼링로 (Tempering Furnace)',
+        hazardCategory: 'Chemical' as HazardCategory,
+        accidentType: '중독 (Poisoning)',
+        hazardSituation: '템퍼링 공정 중 냉각유에서 발생하는 유증기(Oil Vapor)가 충분한 환기 없이 누적되어 호흡기 자극 및 장기간 노출 시 폐 손상을 유발함',
+        legalBasis: '산업안전보건기준에 관한 규칙 제429조 (국소배기장치의 성능)',
+        currentSafetyMeasures: '창문 개방 및 일반 마스크',
+        reductionMeasures: '냉각유 밀폐 순환식 냉각 시스템 도입, 로 주변 국소배기장치(집진 및 필터 교체 주 1회), 유증기 흡수용 활성탄 필터 설치',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 3
+      }
+    ]
+  },
+  {
+    processName: '극저온처리 공정',
+    detailedWorkContent: '극저온처리기를 사용하여 강화된 금속 부품을 -196°C(액화질소) 이하로 냉각시켜 잔류 오스테나이트를 제거하고 경도를 향상시키는 공정',
+    equipmentUsed: ['극저온처리기 (Cryogenic Treatment Unit)', '천장 크레인 / 호이스트 (Overhead Crane)'],
+    chemicalsUsed: ['액화질소 (Liquid Nitrogen, LN2)'],
+    hazards: [
+      {
+        machineryRelated: '극저온처리기 (Cryogenic Treatment Unit)',
+        hazardCategory: 'Thermal' as HazardCategory,
+        accidentType: '저온화상 (Cryogenic Burn)',
+        hazardSituation: '극저온 처리로에서 -196°C의 액화질소에 불의로 신체 일부(손, 팔)가 접촉하여 극심한 저온화상을 입고 조직 괴사 위험이 발생함',
+        legalBasis: '산업안전보건기준에 관한 규칙 제232조 (고온물체에 의한 화상 방지) - 확대 해석',
+        currentSafetyMeasures: '주의 표지판 및 감시인',
+        reductionMeasures: '액화질소 저장 및 공급 라인 완전 자동화(원격 제어), 극저온 저항성 장갑(Cryogenic Gloves, -196°C까지 감내) 지급 및 의무 착용, 긴급 응급실 근처 배치 및 저온화상 치료 훈련',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 4
+      },
+      {
+        machineryRelated: '극저온처리기 (Cryogenic Treatment Unit)',
+        hazardCategory: 'Chemical' as HazardCategory,
+        accidentType: '질식 (Asphyxiation)',
+        hazardSituation: '극저온처리 과정에서 액화질소가 기화(Boil-off)하여 실내에 질소 가스가 대량으로 방출되고, 산소 농도가 급격히 저하(20% 미만)되어 산소결핍 질식 위험',
+        legalBasis: '산업안전보건기준에 관한 규칙 제632조 (산소결핍위험장소의 작업)',
+        currentSafetyMeasures: '정기적 환기 및 산소 농도 측정',
+        reductionMeasures: '극저온 처리실 내 산소 농도 자동 감시 시스템(20% 이하 자동 알람 및 배기), 24/7 연속 기계식 환기 시스템 가동, 밀폐공간 진입 시 송기마스크 및 구조원 배치',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 5
+      },
+      {
+        machineryRelated: '극저온처리기 (Cryogenic Treatment Unit)',
+        hazardCategory: 'Mechanical' as HazardCategory,
+        accidentType: '끼임 (Entrapment)',
+        hazardSituation: '극저온처리기 내부의 액화질소 공급 및 배출 밸브 근처에서 작업 중 의류나 신체 부위가 밸브 개폐 기구에 걸려 협착 및 압박 상해를 입음',
+        legalBasis: '산업안전보건기준에 관한 규칙 제87조 (원동기·회전축 등의 위험 방지)',
+        currentSafetyMeasures: '주의문 표시 및 조작 표준화',
+        reductionMeasures: '모든 밸브 조작을 완전 자동화 또는 원격 제어식으로 변경, 밸브 주변 가드 설치, 작업 중 느슨한 의류 금지 규정',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 3
+      }
+    ]
+  },
+  {
+    processName: '유도 가열 열처리 공정',
+    detailedWorkContent: '유도 가열 로에 금속 부품을 장입하여 유도 가열 코일의 고주파 전자기장(10~50kHz)으로 부품을 급속 가열(1000°C 이상)한 후 급냉하는 열처리 공정',
+    equipmentUsed: ['유도 가열 로 (Induction Furnace)'],
+    chemicalsUsed: ['냉각수 (Coolant)', '고주파 전원'],
+    hazards: [
+      {
+        machineryRelated: '유도 가열 로 (Induction Furnace)',
+        hazardCategory: 'Electrical' as HazardCategory,
+        accidentType: '감전 (Electric Shock)',
+        hazardSituation: '유도 가열 로의 고주파 전원 공급 부분(수kW ~ 수십kW)에서 절연 손상으로 누전이 발생하여, 전원 케이블 손상 부위에 접촉한 작업자가 고전류에 감전됨',
+        legalBasis: '산업안전보건기준에 관한 규칙 제302조 (전기 기계·기구의 접지)',
+        currentSafetyMeasures: '보호 접지 및 일일 점검',
+        reductionMeasures: '고주파 전원 정기 절연 저항값 측정(1,000V 메거 이상), 고감도 누전차단기(30mA) 인입 배선, 절연 장갑 및 절연화 지급',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 5
+      },
+      {
+        machineryRelated: '유도 가열 로 (Induction Furnace)',
+        hazardCategory: 'Thermal' as HazardCategory,
+        accidentType: '화상 (Burn)',
+        hazardSituation: '유도 가열 코일에서 방사되는 적외선 및 고온 부품 표면 복사열에 의해, 안면과 상체가 심각한 화상을 입음',
+        legalBasis: '산업안전보건기준에 관한 규칙 제232조 (고온물체에 의한 화상 방지)',
+        currentSafetyMeasures: '보호복 및 안면 보호구 착용',
+        reductionMeasures: '고온 부품 주변 방사열 차단판 설치, 내열성 작업복 및 면 안전모 지급, 고온 부품 취급용 특수 집게 및 가열패드 제공',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 3
       }
     ]
   }
