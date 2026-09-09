@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { ArrowRight, CheckCircle2, Zap, BarChart3, FileText, Settings, Download, Users, ShieldAlert } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Zap, BarChart3, FileText, Settings, Download, Users, ShieldAlert, ClipboardCheck, FileCheck2, History } from 'lucide-react';
 import PrivacyPolicy from './PrivacyPolicy';
 import TermsOfService from './TermsOfService';
 import RefundPolicy from './RefundPolicy';
 
 interface LandingPageProps {
   onStartClick: () => void;
+  onCategoryClick: () => void;
   onPaymentClick?: (plan: string, amount: number) => void;
 }
 
-export default function LandingPage({ onStartClick, onPaymentClick }: LandingPageProps) {
+export default function LandingPage({ onStartClick, onCategoryClick, onPaymentClick }: LandingPageProps) {
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
   const [isTermsOfServiceOpen, setIsTermsOfServiceOpen] = useState(false);
   const [isRefundPolicyOpen, setIsRefundPolicyOpen] = useState(false);
@@ -29,6 +30,7 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-gray-600 hover:text-gray-900">기능</a>
             <a href="#how" className="text-sm text-gray-600 hover:text-gray-900">사용법</a>
+            <a href="#iso45001" className="text-sm text-gray-600 hover:text-gray-900">ISO 45001</a>
             <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900">요금제</a>
             <button
               onClick={onStartClick}
@@ -69,10 +71,10 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
                 <ArrowRight className="w-5 h-5" />
               </button>
               <button
-                onClick={onStartClick}
+                onClick={onCategoryClick}
                 className="px-8 py-3 border-2 border-gray-200 text-gray-900 rounded-lg font-semibold hover:border-gray-300 transition"
               >
-                사용 방법 보기
+                공종별 위험성평가
               </button>
             </div>
 
@@ -286,6 +288,61 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
         </div>
       </section>
 
+      {/* ISO 45001 Documentation Section */}
+      <section id="iso45001" className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mb-12">
+            <span className="text-sm font-semibold text-emerald-300 border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 rounded-full">
+              ISO 45001 준비 지원
+            </span>
+            <h2 className="text-4xl font-bold mt-5">안전보건경영시스템 심사를 위한 기록을 체계적으로</h2>
+            <p className="text-slate-300 text-lg mt-5 leading-relaxed">
+              ISO 45001의 위험요인 파악과 개선 활동에 필요한 자료를 공정별로 작성하고, 실행 이력을 한곳에서 관리하세요.
+              위험성평가와 문서 관리를 돕는 도구이며 인증이나 심사 통과를 보장하지는 않습니다.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                title: '위험성평가 기록',
+                description: '공정·설비별 유해위험요인, 위험성 추정, 감소대책과 잔류위험을 표준 양식으로 정리합니다.',
+                icon: ClipboardCheck
+              },
+              {
+                title: '개선조치 이력',
+                description: '담당자, 개선 예정일, 완료일과 개선 후 위험 수준을 기록해 조치의 추적성을 높입니다.',
+                icon: History
+              },
+              {
+                title: '심사 대응용 문서 출력',
+                description: '위험성평가표와 안전보건 관련 기록을 인쇄·PDF로 출력해 내부 검토와 증빙 자료로 활용할 수 있습니다.',
+                icon: FileCheck2
+              }
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div key={i} className="bg-white/10 border border-white/15 rounded-lg p-7">
+                  <Icon className="w-8 h-8 text-emerald-300 mb-5" />
+                  <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
+                  <p className="text-slate-300 leading-relaxed">{item.description}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 border-t border-white/15 pt-8">
+            <p className="text-sm text-slate-400">사업장 상황과 적용 범위에 따라 필요한 절차와 증빙이 달라질 수 있습니다.</p>
+            <button
+              onClick={onStartClick}
+              className="px-6 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-400 transition flex items-center gap-2 whitespace-nowrap"
+            >
+              위험성평가 시작하기 <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -334,19 +391,19 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
               },
               {
                 name: 'PRO',
-                price: '₩250,000',
+                price: '₩380,000',
                 period: '/년',
                 originalPrice: '₩420,000',
-                subtext: '연 요금 40% 할인',
+                subtext: '연 요금 10% 할인',
                 cta: 'PRO 시작하기',
                 highlight: true,
                 features: [
                   { text: 'PLUS 모든 기능', included: true },
-                  { text: '팀원 공유 (최대 5명)', included: true },
-                  { text: '회사 템플릿 관리', included: true },
-                  { text: '다수 현장 관리', included: true },
-                  { text: '관리자 대시보드', included: true },
-                  { text: '우선 고객 지원', included: true }
+                  { text: '다중 평가 프로젝트 관리', included: true },
+                  { text: 'TBM 회의록 자동 연동', included: true },
+                  { text: '문서/보고서 PDF 인쇄 저장', included: true },
+                  { text: 'AI 위험요인 자동 생성', included: true },
+                  { text: '우선 지원 및 맞춤 안내', included: true }
                 ]
               }
             ].map((plan, i) => (
@@ -379,7 +436,7 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
                       } else if (plan.name === 'PLUS' && onPaymentClick) {
                         onPaymentClick('Plus', 35000);
                       } else if (plan.name === 'PRO' && onPaymentClick) {
-                        onPaymentClick('Pro', 250000);
+                        onPaymentClick('Pro', 380000);
                       }
                     }}
                     className={`w-full mt-8 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
@@ -504,6 +561,9 @@ export default function LandingPage({ onStartClick, onPaymentClick }: LandingPag
               </div>
               <div>
                 <span className="font-semibold">사업자등록번호:</span> 485-04-03943
+              </div>
+              <div>
+                <span className="font-semibold">통신판매업 신고번호:</span> 2026-경기평택-0624
               </div>
               <div>
                 <span className="font-semibold">대표자명:</span> 김계환

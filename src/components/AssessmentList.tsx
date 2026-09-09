@@ -5,10 +5,12 @@
 
 import { useState } from 'react';
 import { RiskAssessment, WorkflowStatus } from '../types';
-import { Search, Plus, Calendar, ShieldCheck, Copy, Trash2, ArrowRight, Eye, ClipboardList } from 'lucide-react';
+import { requiresRiskReduction } from '../utils/risk';
+import { Search, Plus, Calendar, ShieldCheck, Copy, Trash2, ArrowRight, ArrowLeft, Eye, ClipboardList } from 'lucide-react';
 
 interface AssessmentListProps {
   assessments: RiskAssessment[];
+  onBackToHome: () => void;
   onCreateNew: () => void;
   onSelect: (id: string) => void;
   onViewDoc: (id: string) => void;
@@ -18,6 +20,7 @@ interface AssessmentListProps {
 
 export default function AssessmentList({
   assessments,
+  onBackToHome,
   onCreateNew,
   onSelect,
   onViewDoc,
@@ -50,6 +53,15 @@ export default function AssessmentList({
         {/* Top Title & Quick Action */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4" id="list-header">
           <div className="flex items-start gap-3">
+            <button
+              type="button"
+              onClick={onBackToHome}
+              className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"
+              title="홈으로 돌아가기"
+              aria-label="홈으로 돌아가기"
+            >
+              <ArrowLeft size={18} />
+            </button>
             <span className="w-2.5 h-8 bg-emerald-500 rounded-sm mt-1 shrink-0"></span>
             <div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">
@@ -155,7 +167,7 @@ export default function AssessmentList({
           {filteredAssessments.map((a) => {
             const totalFactors = a.processes.reduce((sum, p) => sum + p.hazards.length, 0);
             const unacceptableFactors = a.processes.reduce(
-              (sum, p) => sum + p.hazards.filter(h => h.riskScore >= 9).length,
+              (sum, p) => sum + p.hazards.filter(h => requiresRiskReduction(h.riskLevel)).length,
               0
             );
 

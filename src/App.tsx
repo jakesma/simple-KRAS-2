@@ -8,23 +8,26 @@ import { RiskAssessment, CompanyProfile, ManufacturingProcess, HazardItem } from
 import AssessmentList from './components/AssessmentList';
 import AssessmentForm from './components/AssessmentForm';
 import DocumentViewer from './components/DocumentViewer';
+import TbmMeetingForm from './components/TbmMeetingForm';
 import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
 import PaymentPage from './components/PaymentPage';
+import CategorySelector from './components/CategorySelector';
 import { EXPERT_PROCESS_TEMPLATES } from './data/expertDatabase';
+import { generateProcessFromCategory, SubCategory } from './data/categories';
 import { ShieldCheck, Layers, Info, LogOut } from 'lucide-react';
 import { onAuthStateChanged, getCurrentUser, logOut, AuthUser } from './config/auth';
 import { getUserAssessments, saveAssessment, deleteAssessment, migrateLocalStorageToFirestore } from './config/firestore';
 
 // Default corporate profile
 const DEFAULT_PROFILE: CompanyProfile = {
-  companyName: '(주)우성정밀공업',
-  ceoName: '김우성',
-  address: '경기도 시흥시 시화벤처로 234 반월국가산업단지',
-  employeeCount: 45,
-  businessRegNo: '124-81-99882',
-  siteManager: '이주형 부장',
-  department: '안전관리부'
+  companyName: '',
+  ceoName: '',
+  address: '',
+  employeeCount: '',
+  businessRegNo: '',
+  siteManager: '',
+  department: ''
 };
 
 // Seed realistic assessment data if localstorage is empty
@@ -145,26 +148,30 @@ const INITIAL_ASSESSMENTS: RiskAssessment[] = [
 
 export default function App() {
   const [showLanding, setShowLanding] = useState(() => {
-    // Check if user has visited before
-    const hasVisited = localStorage.getItem('kras_dashboard_visited');
-    return !hasVisited;
+    // Unauthenticated visitors always start on the main page.
+    return true;
   });
+
+  // Category selector state
+  const [showCategorySelector, setShowCategorySelector] = useState(false);
   
   // Firebase Auth state
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [migratingData, setMigratingData] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(() => localStorage.getItem('kras_guest_mode') === 'true');
 
   // Dashboard state
   const [activeTab, setActiveTab] = useState<'assessments'>('assessments');
   const [assessments, setAssessments] = useState<RiskAssessment[]>([]);
   const [editingAssessmentId, setEditingAssessmentId] = useState<string | null>(null);
   const [viewingAssessmentId, setViewingAssessmentId] = useState<string | null>(null);
+  const [tbmAssessmentId, setTbmAssessmentId] = useState<string | null>(null);
   
   // Payment state
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState(35000); // Default: Pro plan monthly
+  const [paymentAmount, setPaymentAmount] = useState(380000); // Default: Pro annual plan
   const [paymentPlan, setPaymentPlan] = useState('Pro');
+  const [subscriptionPlan, setSubscriptionPlan] = useState(() => localStorage.getItem('kras_subscription_plan') || 'Free');
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -172,43 +179,42 @@ export default function App() {
       setAuthUser(user);
       
       if (user) {
-        // User is logged in - load data from Firestore
-        setMigratingData(true);
-        
-        // Try to load from Firestore
-        const firestoreResult = await getUserAssessments(user.uid);
-        
-        if (firestoreResult.success && firestoreResult.assessments) {
-          setAssessments(firestoreResult.assessments);
-          // Don't need to use localStorage for logged-in users
-        } else {
-          // If Firestore is empty, try to migrate from localStorage
-          const localData = localStorage.getItem('kras_manufacturing_assessments');
-          if (localData) {
-            try {
-              const parsedData = JSON.parse(localData) as RiskAssessment[];
-              const migrationResult = await migrateLocalStorageToFirestore(user.uid, parsedData);
-              
-              if (migrationResult.success) {
-                console.log(`✅ Migrated ${migrationResult.count} assessments to Firestore`);
-                // Reload from Firestore after migration
-                const updatedResult = await getUserAssessments(user.uid);
-                if (updatedResult.success && updatedResult.assessments) {
-                  setAssessments(updatedResult.assessments);
-                }
-              }
-            } catch (err) {
-              console.error('Migration error:', err);
-              // Still use localStorage if migration fails
-              setAssessments(INITIAL_ASSESSMENTS);
-            }
-          } else {
-            // No local data, start with empty or sample data
-            setAssessments(INITIAL_ASSESSMENTS);
+        localStorage.removeItem('kras_guest_mode');
+        setIsGuestMode(false);
+        setShowLanding(false);
+        // Show local data immediately; synchronize with Firestore in the background.
+        let localAssessments: RiskAssessment[] | null = null;
+        const localData = localStorage.getItem('kras_manufacturing_assessments');
+        if (localData) {
+          try {
+            localAssessments = JSON.parse(localData) as RiskAssessment[];
+          } catch (err) {
+            console.error('Error parsing localStorage:', err);
           }
         }
-        
-        setMigratingData(false);
+
+        setAssessments(localAssessments && localAssessments.length > 0 ? localAssessments : INITIAL_ASSESSMENTS);
+
+        void getUserAssessments(user.uid).then((firestoreResult) => {
+          if (firestoreResult.success && firestoreResult.assessments && firestoreResult.assessments.length > 0) {
+            setAssessments(firestoreResult.assessments);
+            return;
+          }
+
+          if (localAssessments && localAssessments.length > 0) {
+            // Keep migration off the critical path so the dashboard opens immediately.
+            void migrateLocalStorageToFirestore(user.uid, localAssessments).then((migrationResult) => {
+              if (migrationResult.success) {
+                console.log(`✅ Migrated ${migrationResult.count} assessments to Firestore`);
+              }
+            }).catch((err) => {
+              console.error('Migration error:', err);
+            });
+          }
+        }).catch((err) => {
+          console.error('Firestore sync skipped:', err);
+        });
+
       } else {
         // User is logged out - load from localStorage
         const localData = localStorage.getItem('kras_manufacturing_assessments');
@@ -221,7 +227,6 @@ export default function App() {
             setAssessments(INITIAL_ASSESSMENTS);
           }
         } else {
-          // No local data, use initial assessments for demo
           setAssessments(INITIAL_ASSESSMENTS);
         }
         setEditingAssessmentId(null);
@@ -368,6 +373,7 @@ export default function App() {
   // Get active editing assessment
   const activeEditing = assessments.find(a => a.id === editingAssessmentId);
   const activeViewing = assessments.find(a => a.id === viewingAssessmentId);
+  const activeTbmAssessment = assessments.find(a => a.id === tbmAssessmentId);
 
   const handleEnterDashboard = () => {
     localStorage.setItem('kras_dashboard_visited', 'true');
@@ -376,8 +382,10 @@ export default function App() {
 
   const handleLogout = async () => {
     if (window.confirm('정말 로그아웃하시겠습니까?')) {
-      const result = await logOut();
+      const result = authUser ? await logOut() : { success: true };
       if (result.success) {
+        localStorage.removeItem('kras_guest_mode');
+        setIsGuestMode(false);
         setAuthUser(null);
         setAssessments([]);
         setEditingAssessmentId(null);
@@ -385,6 +393,12 @@ export default function App() {
         setShowLanding(true);
       }
     }
+  };
+
+  const handleGuestAccess = () => {
+    localStorage.setItem('kras_guest_mode', 'true');
+    setIsGuestMode(true);
+    setShowLanding(false);
   };
 
   // Show loading state while Firebase auth is initializing
@@ -406,30 +420,83 @@ export default function App() {
     return (
       <LandingPage 
         onStartClick={handleEnterDashboard}
+        onCategoryClick={() => {
+          setShowCategorySelector(true);
+          setShowLanding(false);
+        }}
         onPaymentClick={(plan, amount) => {
           setPaymentPlan(plan);
           setPaymentAmount(amount);
           setShowPayment(true);
+          setShowLanding(false);
         }}
       />
     );
   }
 
-  // Show auth page only if user explicitly tries to save (not here anymore)
-
-  // Show data migration state
-  if (migratingData) {
+  // Show category selector
+  if (showCategorySelector) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4">
-            <ShieldCheck className="w-8 h-8 text-emerald-600 animate-pulse" />
-          </div>
-          <p className="text-gray-600 font-semibold">데이터 동기화 중...</p>
-        </div>
-      </div>
+      <CategorySelector
+        onSelectCategory={(category: SubCategory) => {
+          // Create a new assessment with the selected category
+          setShowCategorySelector(false);
+
+          // Create a new ManufacturingProcess from the category
+          const categoryProcess = generateProcessFromCategory(category);
+
+          // Create a new assessment
+          const newAssessment: RiskAssessment = {
+            id: `assess_${Date.now()}`,
+            title: `${category.name} 위험성평가`,
+            assessmentType: 'regular',
+            createdAt: new Date().toISOString().split('T')[0],
+            updatedAt: new Date().toISOString().split('T')[0],
+            version: 1,
+            status: 'draft',
+            companyProfile: DEFAULT_PROFILE,
+            processes: [
+              {
+                id: `proc_${Date.now()}`,
+                ...categoryProcess
+              } as ManufacturingProcess
+            ]
+          };
+
+          setAssessments([newAssessment, ...assessments]);
+          setViewingAssessmentId(newAssessment.id);
+        }}
+        onBack={() => {
+          setShowCategorySelector(false);
+          setShowLanding(true);
+        }}
+      />
     );
   }
+
+  // Require authentication before opening the assessment dashboard.
+  if (!authUser && !isGuestMode) {
+    return (
+      <AuthPage
+        onAuthSuccess={() => setShowLanding(false)}
+        onGuestAccess={handleGuestAccess}
+      />
+    );
+  }
+
+  if (activeTbmAssessment) {
+    return (
+      <TbmMeetingForm
+        assessment={activeTbmAssessment}
+        onBack={() => {
+          setTbmAssessmentId(null);
+          setViewingAssessmentId(activeTbmAssessment.id);
+        }}
+      />
+    );
+  }
+
+  const billingCycleLabel = paymentPlan === 'Pro' ? '연간 구독료' : '월간 구독료';
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-800 flex flex-col font-sans" id="app-shell">
@@ -473,8 +540,8 @@ export default function App() {
           {/* User Meta */}
           <div className="hidden sm:flex items-center gap-3 text-xs border-l border-[#34495E] pl-4" id="header-user-badge">
             <div className="text-right">
-              <span className="text-slate-400 block text-[10px]">로그인 사용자</span>
-              <strong className="text-slate-200 text-[11px] font-semibold">{authUser?.displayName || authUser?.email}</strong>
+              <span className="text-slate-400 block text-[10px]">{authUser ? '로그인 사용자' : '비회원 사용자'}</span>
+              <strong className="text-slate-200 text-[11px] font-semibold">{authUser?.displayName || authUser?.email || '비회원'}</strong>
             </div>
             <div className="w-8 h-8 rounded-full bg-slate-700/80 flex items-center justify-center font-bold text-slate-200">
               {authUser?.displayName?.[0] || authUser?.email?.[0] || '사'}
@@ -496,10 +563,10 @@ export default function App() {
         {showPayment ? (
           <PaymentPage
             amount={paymentAmount}
-            description={`SIMPLE KRAS ${paymentPlan} 플랜 월간 구독료`}
+            description={`SIMPLE KRAS ${paymentPlan} 플랜 ${billingCycleLabel}`}
             onSuccess={() => {
-              setShowPayment(false);
-              // 결제 성공 후 처리 로직
+              localStorage.setItem('kras_subscription_plan', paymentPlan);
+              setSubscriptionPlan(paymentPlan);
               console.log('결제 완료:', paymentPlan, paymentAmount);
             }}
             onCancel={() => setShowPayment(false)}
@@ -508,10 +575,19 @@ export default function App() {
           <DocumentViewer
             assessment={activeViewing}
             onBack={() => setViewingAssessmentId(null)}
+            onCreateTbm={() => {
+              setViewingAssessmentId(null);
+              setTbmAssessmentId(activeViewing.id);
+            }}
+            onEdit={() => {
+              setEditingAssessmentId(activeViewing.id);
+              setViewingAssessmentId(null);
+            }}
           />
         ) : activeEditing ? (
           <AssessmentForm
             assessment={activeEditing}
+            canUseAi={subscriptionPlan === 'Pro'}
             onSave={handleSave}
             onBack={() => setEditingAssessmentId(null)}
             onLogAudit={handleLogAudit}
@@ -519,6 +595,11 @@ export default function App() {
         ) : (
           <AssessmentList
             assessments={assessments}
+            onBackToHome={() => {
+              setEditingAssessmentId(null);
+              setViewingAssessmentId(null);
+              setShowLanding(true);
+            }}
             onCreateNew={handleCreateNew}
             onSelect={handleSelect}
             onViewDoc={handleViewDoc}

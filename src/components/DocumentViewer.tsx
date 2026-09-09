@@ -5,26 +5,53 @@
 
 import { useState } from 'react';
 import { RiskAssessment, HazardItem } from '../types';
-import { FileText, Printer, ArrowLeft, Download, ShieldAlert, CheckCircle2, Copy, Check } from 'lucide-react';
+import { FileText, Printer, ArrowLeft, Download, ShieldAlert, CheckCircle2, Copy, Check, Pencil, ClipboardCheck } from 'lucide-react';
+import { requiresRiskReduction, RISK_LEVEL_LABELS } from '../utils/risk';
 
 interface DocumentViewerProps {
   assessment: RiskAssessment;
   onBack: () => void;
+  onCreateTbm: () => void;
+  onEdit: () => void;
 }
 
 type DocumentTab = 'survey' | 'hazard' | 'estimation' | 'reduction' | 'kras';
 
-export default function DocumentViewer({ assessment, onBack }: DocumentViewerProps) {
+const formatResponsiblePerson = (responsiblePerson: string) => {
+  const trimmed = responsiblePerson.trim();
+  if (!trimmed) return { name: '-', position: '' };
+
+  const parts = trimmed.split(/\s+/);
+  if (parts.length < 2) return { name: trimmed, position: '' };
+
+  return {
+    name: parts.slice(0, -1).join(' '),
+    position: parts.at(-1) || ''
+  };
+};
+
+const ResponsiblePersonCell = ({ value }: { value: string }) => {
+  const { name, position } = formatResponsiblePerson(value);
+
+  return (
+    <div className="flex flex-col items-center justify-center leading-tight">
+      <span data-responsible-name>{name || '-'}</span>
+      {position && <span className="mt-1 text-[9px] text-slate-500" data-responsible-position>{position}</span>}
+    </div>
+  );
+};
+
+export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit }: DocumentViewerProps) {
   const [activeTab, setActiveTab] = useState<DocumentTab>('kras');
   const [copied, setCopied] = useState(false);
 
   const totalHazards = assessment.processes.reduce((acc, p) => acc + p.hazards.length, 0);
   const unacceptableHazards = assessment.processes.reduce(
-    (acc, p) => acc + p.hazards.filter((h) => h.riskScore >= 9).length,
+    (acc, p) => acc + p.hazards.filter((h) => requiresRiskReduction(h.riskLevel)).length,
     0
   );
   const completedReductions = assessment.processes.reduce(
-    (acc, p) => acc + p.hazards.filter((h) => h.riskScore >= 9 && h.completionDate).length,
+    (acc, p) => acc + p.hazards.filter((h) => requiresRiskReduction(h.riskLevel) && h.completionDate).length,
     0
   );
 
@@ -42,15 +69,15 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
 
     if (activeTab === 'kras') {
       markdown += `## KRAS 표준 위험성평가표\n\n`;
-      markdown += `| 공정명 | 작업 내용 | 유해위험 요인 (상황 및 결과) | 법적근거 | 현재조치 | 빈도 | 강도 | 최초점수 | 위험감소대책 | 개선예정일 | 담당자 | 개선후 빈도 | 개선후 강도 | 잔류점수 |\n`;
-      markdown += `| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: |\n`;
+      markdown += `| 공정명 | 작업 내용 | 유해위험 요인 (상황 및 결과) | 법적근거 | 현재조치 | 최초 위험성 | 위험감소대책 | 개선예정일 | 담당자 | 잔류 위험성 |\n`;
+      markdown += `| :--- | :--- | :--- | :--- | :--- | :---: | :--- | :---: | :---: | :---: |\n`;
       
       assessment.processes.forEach((p) => {
         if (p.hazards.length === 0) {
-          markdown += `| ${p.processName} | ${p.detailedWorkContent} | 등록된 위험요인 없음 | - | - | - | - | - | - | - | - | - | - | - |\n`;
+          markdown += `| ${p.processName} | ${p.detailedWorkContent} | 등록된 위험요인 없음 | - | - | - | - | - | - | - |\n`;
         } else {
           p.hazards.forEach((h) => {
-            markdown += `| ${p.processName} | ${p.detailedWorkContent} | ${h.hazardSituation} | ${h.legalBasis} | ${h.currentSafetyMeasures} | ${h.likelihood} | ${h.severity} | ${h.riskScore} (${h.riskLevel}) | ${h.reductionMeasures} | ${h.plannedDate} | ${h.responsiblePerson} | ${h.postLikelihood} | ${h.postSeverity} | ${h.postRiskScore} |\n`;
+            markdown += `| ${p.processName} | ${p.detailedWorkContent} | ${h.hazardSituation} | ${h.legalBasis} | ${h.currentSafetyMeasures} | ${RISK_LEVEL_LABELS[h.riskLevel]} | ${h.reductionMeasures} | ${h.plannedDate} | ${h.responsiblePerson} | ${RISK_LEVEL_LABELS[h.postRiskLevel]} |\n`;
           });
         }
       });
@@ -97,6 +124,22 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
             </div>
           </div>
           <div className="flex items-center gap-2 self-end md:self-auto">
+            <button
+              onClick={onCreateTbm}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+              id="doc-create-tbm-btn"
+            >
+              <ClipboardCheck size={14} />
+              오늘 TBM 회의록
+            </button>
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+              id="doc-edit-btn"
+            >
+              <Pencil size={14} />
+              수정하기
+            </button>
             <button
               onClick={handleCopyMarkdown}
               className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold transition"
@@ -223,8 +266,8 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
               <div className="flex"><span className="w-24 font-bold text-slate-500">사업장명:</span> <span className="text-slate-950">{assessment.companyProfile.companyName}</span></div>
               <div className="flex"><span className="w-24 font-bold text-slate-500">대표자명:</span> <span className="text-slate-950">{assessment.companyProfile.ceoName}</span></div>
               <div className="flex"><span className="w-24 font-bold text-slate-500">소재지:</span> <span className="text-slate-950">{assessment.companyProfile.address}</span></div>
-              <div className="flex"><span className="w-24 font-bold text-slate-500">근로자수:</span> <span className="text-slate-950">{assessment.companyProfile.employeeCount}명</span></div>
-              <div className="flex"><span className="w-24 font-bold text-slate-500">작성일자:</span> <span className="text-slate-950 font-mono">{assessment.createdAt}</span></div>
+              <div className="flex"><span className="w-24 font-bold text-slate-500">근로자수:</span> <span className="w-20 text-right text-slate-950" id="employee-count-value">{assessment.companyProfile.employeeCount}명</span></div>
+              <div className="flex"><span className="w-24 font-bold text-slate-500">작성일자:</span> <span className="w-20 text-right text-slate-950 font-mono" id="assessment-date-value">{assessment.createdAt}</span></div>
             </div>
 
             {/* Right Standard Korean Approval Box */}
@@ -360,7 +403,7 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
           {activeTab === 'estimation' && (
             <div className="space-y-6" id="estimation-doc-content">
               <h3 className="text-sm font-bold text-slate-900 bg-slate-100 py-1.5 px-3 border-l-4 border-slate-900">
-                3. 빈도 × 강도 계산법 기반 위험성 정량 추정 및 허용 판정서
+                3. 상·중·하 판단법 기반 위험성 평가 및 허용 판정서
               </h3>
               <table className="w-full text-xs text-left border-collapse border border-slate-900" id="estimation-table">
                 <thead>
@@ -368,9 +411,6 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                     <th className="border-r border-slate-900 p-2 w-1/6">공정명</th>
                     <th className="border-r border-slate-900 p-2">유해위험 상황 및 예상 결과</th>
                     <th className="border-r border-slate-900 p-2 w-28">현재 안전 조치 상태</th>
-                    <th className="border-r border-slate-900 p-2 w-14">빈도 (L)</th>
-                    <th className="border-r border-slate-900 p-2 w-14">강도 (S)</th>
-                    <th className="border-r border-slate-900 p-2 w-16">위험 점수 (L×S)</th>
                     <th className="border-r border-slate-900 p-2 w-16">위험 수준</th>
                     <th className="border-r border-slate-900 p-2 w-20">허용 여부</th>
                   </tr>
@@ -386,15 +426,12 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                         ) : null}
                         <td className="border-r border-slate-900 p-2 text-left whitespace-pre-wrap leading-relaxed">{h.hazardSituation}</td>
                         <td className="border-r border-slate-900 p-2 text-left whitespace-pre-wrap">{h.currentSafetyMeasures}</td>
-                        <td className="border-r border-slate-900 p-2 font-semibold font-mono">{h.likelihood}</td>
-                        <td className="border-r border-slate-900 p-2 font-semibold font-mono">{h.severity}</td>
-                        <td className="border-r border-slate-900 p-2 font-bold font-mono text-slate-950 bg-slate-50">{h.riskScore}</td>
                         <td className="border-r border-slate-900 p-2">
                           <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
                             h.riskLevel === 'High' ? 'bg-red-100 text-red-800' :
                             h.riskLevel === 'Medium' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'
                           }`}>
-                            {h.riskLevel === 'High' ? '고위험' : h.riskLevel === 'Medium' ? '중위험' : '저위험'}
+                            {RISK_LEVEL_LABELS[h.riskLevel]}
                           </span>
                         </td>
                         <td className="border-r border-slate-900 p-2">
@@ -408,9 +445,9 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                 </tbody>
               </table>
               <div className="bg-slate-50 p-4 border border-slate-300 text-[11px] leading-relaxed text-slate-600 rounded" id="estimation-notes">
-                <span className="font-bold text-slate-800 block mb-1">※ 위험성 결정 고시 기준:</span>
-                • 위험 점수 <strong>1~8점</strong>: 통상 수준의 관리 조치가 유지되는 상태로 안전성이 <strong>허용 가능(Acceptable)</strong>한 수준으로 결정됩니다.<br />
-                • 위험 점수 <strong>9~25점</strong>: 중상해 및 기계 협착, 중독 리스크가 잔존하여 <strong>허용 불가(Unacceptable)</strong> 상태이므로 조속한 감소대책의 이행이 강제됩니다.
+                <span className="font-bold text-slate-800 block mb-1">※ 위험성 결정 기준:</span>
+                • 위험성 <strong>하</strong>: 현재의 안전조치를 유지하며 허용 가능한 수준으로 관리합니다.<br />
+                • 위험성 <strong>중·상</strong>: 허용 불가 상태로 판단하여 위험성 감소대책을 수립하고 이행합니다.
               </div>
             </div>
           )}
@@ -427,17 +464,17 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-900 text-slate-700 font-bold text-center">
                     <th className="border-r border-slate-900 p-2 w-1/6">공정명</th>
-                    <th className="border-r border-slate-900 p-2">기존 요인 (점수)</th>
+                    <th className="border-r border-slate-900 p-2">기존 요인 (위험성)</th>
                     <th className="border-r border-slate-900 p-2 w-1/3">수립된 구체적 위험 감소 대책</th>
                     <th className="border-r border-slate-900 p-2 w-20">개선예정일</th>
                     <th className="border-r border-slate-900 p-2 w-14">담당자</th>
                     <th className="border-r border-slate-900 p-2 w-20">이행 완료일</th>
-                    <th className="border-r border-slate-900 p-2 w-16">개선 후 잔류위험 (L×S)</th>
+                    <th className="border-r border-slate-900 p-2 w-16">개선 후 잔류위험</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-900 text-center">
                   {assessment.processes.flatMap((p) => 
-                    p.hazards.filter(h => h.riskScore >= 9).map((h, index, arr) => (
+                    p.hazards.filter(h => requiresRiskReduction(h.riskLevel)).map((h, index, arr) => (
                       <tr key={h.id}>
                         {index === 0 ? (
                           <td rowSpan={arr.length} className="border-r border-slate-900 p-2 font-bold bg-slate-50/50 align-middle text-center w-1/6">
@@ -446,11 +483,13 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                         ) : null}
                         <td className="border-r border-slate-900 p-2 text-left">
                           <div className="line-clamp-2 leading-snug">{h.hazardSituation}</div>
-                          <div className="text-[10px] text-red-600 font-bold mt-1">최초 점수: {h.riskScore}점</div>
+                          <div className="text-[10px] text-red-600 font-bold mt-1">최초 위험성: {RISK_LEVEL_LABELS[h.riskLevel]}</div>
                         </td>
                         <td className="border-r border-slate-900 p-2 text-left whitespace-pre-wrap leading-relaxed font-medium">{h.reductionMeasures}</td>
                         <td className="border-r border-slate-900 p-2 font-mono text-[10px]">{h.plannedDate}</td>
-                        <td className="border-r border-slate-900 p-2">{h.responsiblePerson}</td>
+                        <td className="border-r border-slate-900 p-2">
+                          <ResponsiblePersonCell value={h.responsiblePerson} />
+                        </td>
                         <td className="border-r border-slate-900 p-2 font-mono text-[10px] text-emerald-700 font-semibold">
                           {h.completionDate ? (
                             <span className="bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
@@ -461,8 +500,7 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                           )}
                         </td>
                         <td className="border-r border-slate-900 p-2 bg-slate-50/80">
-                          <div className="font-bold font-mono text-slate-900">{h.postRiskScore}점</div>
-                          <div className="text-[9px] text-slate-400">({h.postLikelihood}×{h.postSeverity})</div>
+                          <div className="font-bold text-slate-900">{RISK_LEVEL_LABELS[h.postRiskLevel]}</div>
                         </td>
                       </tr>
                     ))
@@ -471,7 +509,7 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                     <tr>
                       <td colSpan={7} className="p-8 text-center text-slate-400">
                         <CheckCircle2 size={32} className="mx-auto text-emerald-500 mb-2" />
-                        개선 대책 수립이 강제되는 허용 불가 요인(9점 이상)이 전혀 없습니다.
+                        개선 대책 수립이 필요한 위험성 중·상 요인이 전혀 없습니다.
                       </td>
                     </tr>
                   )}
@@ -496,15 +534,11 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                       <th className="border-r border-slate-900 p-1.5 w-32">위험요인 (상황 및 예상재해)</th>
                       <th className="border-r border-slate-900 p-1.5 w-24">관련 법적 근거</th>
                       <th className="border-r border-slate-900 p-1.5 w-24">현재 안전조치</th>
-                      <th className="border-r border-slate-900 p-1.5 w-8">L</th>
-                      <th className="border-r border-slate-900 p-1.5 w-8">S</th>
-                      <th className="border-r border-slate-900 p-1.5 w-10">위험도</th>
+                      <th className="border-r border-slate-900 p-1.5 w-12">최초 위험성</th>
                       <th className="border-r border-slate-900 p-1.5 w-40">위험 감소대책 수립안</th>
                       <th className="border-r border-slate-900 p-1.5 w-20">개선완료 목표일</th>
                       <th className="border-r border-slate-900 p-1.5 w-12">담당자</th>
-                      <th className="border-r border-slate-900 p-1.5 w-8">L'</th>
-                      <th className="border-r border-slate-900 p-1.5 w-8">S'</th>
-                      <th className="p-1.5 w-10">잔류도</th>
+                      <th className="p-1.5 w-12">잔류 위험성</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-900 leading-normal">
@@ -519,20 +553,18 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                           <td className="border-r border-slate-900 p-1.5 whitespace-pre-wrap">{h.hazardSituation}</td>
                           <td className="border-r border-slate-900 p-1.5 text-slate-600">{h.legalBasis}</td>
                           <td className="border-r border-slate-900 p-1.5 whitespace-pre-wrap">{h.currentSafetyMeasures}</td>
-                          <td className="border-r border-slate-900 p-1 text-center font-mono">{h.likelihood}</td>
-                          <td className="border-r border-slate-900 p-1 text-center font-mono">{h.severity}</td>
-                          <td className={`border-r border-slate-900 p-1 text-center font-bold font-mono ${
-                            h.riskScore >= 9 ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-900'
+                          <td className={`border-r border-slate-900 p-1 text-center font-bold ${
+                            requiresRiskReduction(h.riskLevel) ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-900'
                           }`}>
-                            {h.riskScore}
+                            {RISK_LEVEL_LABELS[h.riskLevel]}
                           </td>
                           <td className="border-r border-slate-900 p-1.5 whitespace-pre-wrap">{h.reductionMeasures || '-'}</td>
                           <td className="border-r border-slate-900 p-1 text-center font-mono text-[9px]">{h.plannedDate || '-'}</td>
-                          <td className="border-r border-slate-900 p-1 text-center">{h.responsiblePerson || '-'}</td>
-                          <td className="border-r border-slate-900 p-1 text-center font-mono text-slate-500">{h.postLikelihood || '-'}</td>
-                          <td className="border-r border-slate-900 p-1 text-center font-mono text-slate-500">{h.postSeverity || '-'}</td>
-                          <td className="p-1 text-center font-bold font-mono text-slate-900 bg-slate-50/80">
-                            {h.postRiskScore || '-'}
+                          <td className="border-r border-slate-900 p-1 text-center">
+                            <ResponsiblePersonCell value={h.responsiblePerson} />
+                          </td>
+                          <td className="p-1 text-center font-bold text-slate-900 bg-slate-50/80">
+                            {RISK_LEVEL_LABELS[h.postRiskLevel]}
                           </td>
                         </tr>
                       ))
@@ -542,6 +574,34 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
               </div>
             </div>
           )}
+
+          <section className="mt-10 break-inside-avoid" id="assessment-attendee-signatures" aria-label="위험성평가 참석자 서명부">
+            <h3 className="text-sm font-bold text-slate-900 bg-slate-100 py-1.5 px-3 border-l-4 border-slate-900 mb-3">
+              위험성평가 참석자 서명부
+            </h3>
+            <table className="w-full text-xs border-collapse border border-slate-900 table-fixed">
+              <thead>
+                <tr className="bg-slate-50 text-slate-700 font-bold text-center">
+                  <th className="border-r border-b border-slate-900 p-2 w-12">NO</th>
+                  <th className="border-r border-b border-slate-900 p-2">성명</th>
+                  <th className="border-r border-b border-slate-900 p-2">직책</th>
+                  <th className="border-r border-b border-slate-900 p-2">서명</th>
+                  <th className="border-b border-slate-900 p-2">비고</th>
+                </tr>
+              </thead>
+              <tbody className="text-center">
+                {Array.from({ length: 10 }, (_, index) => (
+                  <tr key={index} className="h-10">
+                    <td className="border-r border-b border-slate-900 p-2 font-mono">{index + 1}</td>
+                    <td className="border-r border-b border-slate-900 p-2">&nbsp;</td>
+                    <td className="border-r border-b border-slate-900 p-2">&nbsp;</td>
+                    <td className="border-r border-b border-slate-900 p-2">&nbsp;</td>
+                    <td className="border-b border-slate-900 p-2">&nbsp;</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
 
           {/* Legal Footnote Warning Disclaimer (Required by PRD constraints) */}
           <div className="mt-12 pt-6 border-t border-slate-300 text-[10px] leading-relaxed text-slate-400 font-sans print:text-slate-600" id="legal-disclaimer">

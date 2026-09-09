@@ -1,9 +1,11 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   sendPasswordResetEmail,
   updateProfile,
+  GoogleAuthProvider,
   User,
   AuthError,
 } from 'firebase/auth';
@@ -29,6 +31,10 @@ const getErrorMessage = (error: AuthError): string => {
     'auth/wrong-password': '비밀번호가 잘못되었습니다.',
     'auth/too-many-requests': '너무 많은 시도가 있었습니다. 나중에 다시 시도해주세요.',
     'auth/network-request-failed': '네트워크 연결을 확인해주세요.',
+    'auth/popup-closed-by-user': 'Google 로그인 창이 닫혔습니다.',
+    'auth/popup-blocked': '브라우저에서 팝업이 차단되었습니다. 팝업을 허용한 뒤 다시 시도해주세요.',
+    'auth/unauthorized-domain': '현재 사이트 주소가 Firebase 인증 도메인에 등록되지 않았습니다.',
+    'auth/account-exists-with-different-credential': '같은 이메일이 다른 로그인 방식으로 이미 등록되어 있습니다.',
   };
 
   return errorMessages[error.code] || error.message || '인증 오류가 발생했습니다.';
@@ -66,6 +72,30 @@ export const signIn = async (email: string, password: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     
+    return {
+      success: true,
+      user: {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName,
+        photoURL: userCredential.user.photoURL,
+      } as AuthUser,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error as AuthError),
+    };
+  }
+};
+
+// Sign in with Google popup
+export const signInWithGoogle = async () => {
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const userCredential = await signInWithPopup(auth, provider);
+
     return {
       success: true,
       user: {

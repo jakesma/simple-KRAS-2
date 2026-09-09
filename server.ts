@@ -3,14 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import express from 'express';
+import express, { RequestHandler } from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 
-// Load environment variables
-dotenv.config();
+// Load local overrides before shared defaults.
+dotenv.config({ path: ['.env.local', '.env'] });
+
+const firebaseProjectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
+const firebaseApiKey = process.env.FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY;
+const firebaseAuthReady = Boolean(
+  firebaseProjectId &&
+  !firebaseProjectId.startsWith('your_') &&
+  firebaseApiKey &&
+  !firebaseApiKey.startsWith('your_')
+);
 
 // Helper to safely get the Gemini API client
 let aiClient: GoogleGenAI | null = null;
@@ -39,9 +47,54 @@ function getGeminiClient(): GoogleGenAI | null {
   return aiClient;
 }
 
-async function startServer() {
+const requireProAccess: RequestHandler = async (req, res, next) => {
+  const authorization = req.headers.authorization;
+  const idToken = authorization?.startsWith('Bearer ') ? authorization.slice(7) : '';
+
+  if (!idToken) {
+    res.status(401).json({ success: false, error: '로그인이 필요합니다.', source: 'auth' });
+    return;
+  }
+
+  if (!firebaseAuthReady) {
+    res.status(503).json({ success: false, error: 'Firebase 서버 인증이 설정되지 않았습니다.', source: 'auth' });
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseApiKey!)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      }
+    );
+
+    if (!response.ok) {
+      res.status(401).json({ success: false, error: '유효하지 않거나 만료된 로그인 정보입니다.', source: 'auth' });
+      return;
+    }
+
+    const result = await response.json() as {
+      users?: Array<{ customAttributes?: string }>;
+    };
+    const customAttributes = JSON.parse(result.users?.[0]?.customAttributes || '{}');
+    const subscriptionPlan = String(customAttributes.subscriptionPlan || '').toLowerCase();
+
+    if (subscriptionPlan !== 'pro') {
+      res.status(403).json({ success: false, error: 'PRO 플랜이 필요한 기능입니다.', source: 'auth' });
+      return;
+    }
+
+    next();
+  } catch {
+    res.status(401).json({ success: false, error: '유효하지 않거나 만료된 로그인 정보입니다.', source: 'auth' });
+  }
+};
+
+export function createApiApp() {
   const app = express();
-  const PORT = 3000;
 
   app.use(express.json());
 
@@ -50,12 +103,13 @@ async function startServer() {
     res.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
+      firebaseAuthActive: firebaseAuthReady,
       geminiActive: !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY'
     });
   });
 
   // API Route: AI-powered hazard recommendation using gemini-3.5-flash
-  app.post('/api/gemini/generate-hazard', async (req, res) => {
+  app.post('/api/gemini/generate-hazard', requireProAccess, async (req, res) => {
     const { processName, detailedWorkContent, machineryRelated } = req.body;
 
     if (!processName) {
@@ -173,10 +227,25 @@ async function startServer() {
     }
   });
 
+  return app;
+}
+
+async function startServer() {
+  const app = createApiApp();
+  const PORT = Number(process.env.PORT) || 3000;
+  const HMR_PORT = Number(process.env.HMR_PORT) || PORT + 1;
+
   // Integrate Vite as a middleware
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: {
+          port: HMR_PORT,
+          clientPort: HMR_PORT,
+        },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -195,4 +264,6 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}

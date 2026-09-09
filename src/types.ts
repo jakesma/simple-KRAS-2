@@ -9,7 +9,7 @@ export interface CompanyProfile {
   companyName: string;
   ceoName: string;
   address: string;
-  employeeCount: number;
+  employeeCount: number | '';
   businessRegNo: string;
   siteManager: string;
   department: string;

@@ -6,6 +6,8 @@
 import { useState } from 'react';
 import { RiskAssessment, ManufacturingProcess, HazardItem, HazardCategory, CompanyProfile, AuditLog } from '../types';
 import { EXPERT_MACHINERY_LIST, getSuggestedHazards } from '../data/expertDatabase';
+import { auth } from '../config/firebase';
+import { getLegacyRiskValues, getRiskLevelFromScore, requiresRiskReduction, RISK_LEVEL_LABELS, RiskLevel } from '../utils/risk';
 import { 
   Building2, Users, Sliders, ClipboardList, AlertTriangle, 
   CheckCircle, ShieldAlert, Cpu, Sparkles, Plus, Trash2, 
@@ -14,17 +16,19 @@ import {
 
 interface AssessmentFormProps {
   assessment: RiskAssessment;
+  canUseAi: boolean;
   onSave: (updated: RiskAssessment) => void;
   onBack: () => void;
   onLogAudit: (action: string, details: string) => void;
 }
 
-export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit }: AssessmentFormProps) {
+export default function AssessmentForm({ assessment, canUseAi, onSave, onBack, onLogAudit }: AssessmentFormProps) {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [title, setTitle] = useState<string>(assessment.title);
   const [assessmentType, setAssessmentType] = useState<'regular' | 'occasional'>(assessment.assessmentType);
   const [profile, setProfile] = useState<CompanyProfile>({ ...assessment.companyProfile });
   const [processes, setProcesses] = useState<ManufacturingProcess[]>([...assessment.processes]);
+  const [profileSavedAt, setProfileSavedAt] = useState<string | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([
     {
       id: 'initial',
@@ -147,6 +151,8 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
 
   // AI & Expert integration
   const handleAutoGenerateHazards = async (procId: string) => {
+    if (!canUseAi) return;
+
     const proc = processes.find(p => p.id === procId);
     if (!proc) return;
 
@@ -155,9 +161,13 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
 
     try {
       // 1. First try to invoke real server-side Gemini proxy
+      const idToken = await auth.currentUser?.getIdToken();
       const response = await fetch('/api/gemini/generate-hazard', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
+        },
         body: JSON.stringify({
           processName: proc.processName,
           detailedWorkContent: proc.detailedWorkContent,
@@ -171,8 +181,9 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
         // Map response to our internal HazardItem model
         const raw = resData.data;
         const initialScore = raw.suggestedLikelihood * raw.suggestedSeverity;
-        const level = initialScore >= 16 ? 'High' : initialScore >= 9 ? 'Medium' : 'Low';
+        const level = getRiskLevelFromScore(initialScore);
         const isAcceptable = initialScore < 9;
+        const postRiskScore = Math.max(1, raw.suggestedLikelihood - 2) * raw.suggestedSeverity;
 
         const aiHazard: HazardItem = {
           id: `haz_ai_${Date.now()}`,
@@ -193,8 +204,8 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
           responsiblePerson: proc.supervisor || '공정관리자',
           postLikelihood: Math.max(1, raw.suggestedLikelihood - 2),
           postSeverity: raw.suggestedSeverity,
-          postRiskScore: Math.max(1, raw.suggestedLikelihood - 2) * raw.suggestedSeverity,
-          postRiskLevel: (Math.max(1, raw.suggestedLikelihood - 2) * raw.suggestedSeverity) >= 9 ? 'Medium' : 'Low'
+          postRiskScore,
+          postRiskLevel: getRiskLevelFromScore(postRiskScore)
         };
 
         handleUpdateProcess(procId, { hazards: [...proc.hazards, aiHazard] });
@@ -205,8 +216,9 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
         
         const mappedLocal = localItems.map((raw, idx) => {
           const initialScore = raw.suggestedLikelihood * raw.suggestedSeverity;
-          const level = initialScore >= 16 ? 'High' : initialScore >= 9 ? 'Medium' : 'Low';
+          const level = getRiskLevelFromScore(initialScore);
           const isAcceptable = initialScore < 9;
+          const postRiskScore = Math.max(1, raw.suggestedLikelihood - 1) * raw.suggestedSeverity;
           
           return {
             id: `haz_local_${Date.now()}_${idx}`,
@@ -227,8 +239,8 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
             responsiblePerson: proc.supervisor || '반장',
             postLikelihood: Math.max(1, raw.suggestedLikelihood - 1),
             postSeverity: raw.suggestedSeverity,
-            postRiskScore: Math.max(1, raw.suggestedLikelihood - 1) * raw.suggestedSeverity,
-            postRiskLevel: (Math.max(1, raw.suggestedLikelihood - 1) * raw.suggestedSeverity) >= 9 ? 'Medium' : 'Low' as any
+            postRiskScore,
+            postRiskLevel: getRiskLevelFromScore(postRiskScore)
           };
         });
 
@@ -241,6 +253,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
       const localItems = getSuggestedHazards(proc.processName, proc.equipmentUsed);
       const mappedLocal = localItems.map((raw, idx) => {
         const score = raw.suggestedLikelihood * raw.suggestedSeverity;
+        const postRiskScore = Math.max(1, raw.suggestedLikelihood - 1) * raw.suggestedSeverity;
         return {
           id: `haz_local_${Date.now()}_${idx}`,
           hazardCategory: raw.hazardCategory,
@@ -252,7 +265,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
           likelihood: raw.suggestedLikelihood,
           severity: raw.suggestedSeverity,
           riskScore: score,
-          riskLevel: (score >= 16 ? 'High' : score >= 9 ? 'Medium' : 'Low') as any,
+          riskLevel: getRiskLevelFromScore(score),
           isAcceptable: score < 9,
           reductionMeasures: raw.reductionMeasures,
           plannedDate: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString().split('T')[0],
@@ -260,8 +273,8 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
           responsiblePerson: proc.supervisor || '반장',
           postLikelihood: Math.max(1, raw.suggestedLikelihood - 1),
           postSeverity: raw.suggestedSeverity,
-          postRiskScore: Math.max(1, raw.suggestedLikelihood - 1) * raw.suggestedSeverity,
-          postRiskLevel: (Math.max(1, raw.suggestedLikelihood - 1) * raw.suggestedSeverity) >= 9 ? 'Medium' : 'Low' as any
+          postRiskScore,
+          postRiskLevel: getRiskLevelFromScore(postRiskScore)
         };
       });
       handleUpdateProcess(procId, { hazards: [...proc.hazards, ...mappedLocal] });
@@ -278,18 +291,20 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
     const updatedHazards = proc.hazards.map(h => {
       if (h.id === hazId) {
         const merged = { ...h, ...updates };
-        
-        // Recalculate original scores if L or S changed
-        if ('likelihood' in updates || 'severity' in updates) {
-          merged.riskScore = merged.likelihood * merged.severity;
-          merged.riskLevel = merged.riskScore >= 16 ? 'High' : merged.riskScore >= 9 ? 'Medium' : 'Low';
-          merged.isAcceptable = merged.riskScore < 9;
+
+        if ('riskLevel' in updates && updates.riskLevel) {
+          const legacy = getLegacyRiskValues(updates.riskLevel);
+          merged.likelihood = legacy.likelihood;
+          merged.severity = legacy.severity;
+          merged.riskScore = legacy.score;
+          merged.isAcceptable = !requiresRiskReduction(updates.riskLevel);
         }
 
-        // Recalculate post scores if postL or postS changed
-        if ('postLikelihood' in updates || 'postSeverity' in updates) {
-          merged.postRiskScore = merged.postLikelihood * merged.postSeverity;
-          merged.postRiskLevel = merged.postRiskScore >= 16 ? 'High' : merged.postRiskScore >= 9 ? 'Medium' : 'Low';
+        if ('postRiskLevel' in updates && updates.postRiskLevel) {
+          const legacy = getLegacyRiskValues(updates.postRiskLevel);
+          merged.postLikelihood = legacy.likelihood;
+          merged.postSeverity = legacy.severity;
+          merged.postRiskScore = legacy.score;
         }
 
         return merged;
@@ -325,6 +340,11 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
 
     logLocalAudit('기록 물리적 저장', `평가서 상태를 '${finalStatus}'(으)로 최종 보존하였습니다.`);
     onSave(updated);
+  };
+
+  const handleSaveProfile = () => {
+    handleSaveAssessment('draft');
+    setProfileSavedAt(new Date().toLocaleTimeString());
   };
 
   return (
@@ -503,6 +523,21 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                   />
                 </div>
               </div>
+
+              <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-5">
+                <span className="text-xs text-slate-400">
+                  {profileSavedAt ? `저장됨 ${profileSavedAt}` : '입력한 회사 정보는 위험성평가 문서에 반영됩니다.'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700"
+                  id="profile-save-btn"
+                >
+                  <Save size={14} />
+                  프로필 저장
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -587,7 +622,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                   <input
                     type="text"
                     value={p.workerNames.join(', ')}
-                    onChange={(e) => handleUpdateProcess(p.id, { workerNames: e.target.value.split(',').map(n => n.trim()) })}
+                    onChange={(e) => handleUpdateProcess(p.id, { workerNames: e.target.value.split(',').map(n => n.trim()).filter(Boolean) })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900"
                     placeholder="작업자 명단을 쉼표로 작성 (예: 김철수, 이영희, 박지성)"
                   />
@@ -700,12 +735,13 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                   <div className="flex items-center gap-1.5 self-end sm:self-auto">
                     <button
                       onClick={() => handleAutoGenerateHazards(p.id)}
-                      disabled={aiLoading === p.id}
+                      disabled={!canUseAi || aiLoading === p.id}
+                      title={canUseAi ? 'AI 위험 요인 분석' : 'PRO 플랜 전용 기능'}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
                       id={`ai-suggest-btn-${p.id}`}
                     >
                       <Sparkles size={12} className={aiLoading === p.id ? 'animate-spin' : ''} />
-                      {aiLoading === p.id ? 'AI 정밀 분석 중...' : 'AI 위험 요인 분석'}
+                      {aiLoading === p.id ? 'AI 정밀 분석 중...' : canUseAi ? 'AI 위험 요인 분석' : 'PRO 전용 AI 분석'}
                     </button>
                     <button
                       onClick={() => handleAddHazard(p.id)}
@@ -834,11 +870,11 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
             {/* Step Intro */}
             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <AlertTriangle className="text-slate-900" size={16} /> 위험성 추정(빈도x강도) 및 감소 대책 계획
+                <AlertTriangle className="text-slate-900" size={16} /> 위험성 상·중·하 판단 및 감소 대책 계획
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                빈도(L, 1-5)와 강도(S, 1-5)를 입력하여 오점수를 연산합니다. 
-                <strong>9점 이상인 요인은 허용 불가</strong>로 판정되므로 반드시 감소대책과 이행 담당자, 개선 후 잔류위험(8점 이하 설계)을 배정하십시오.
+                유해·위험요인의 위험성을 상·중·하로 직접 판단합니다.
+                <strong>상 또는 중인 요인은 허용 불가</strong>로 판정되므로 반드시 감소대책과 이행 담당자, 개선 후 잔류위험을 배정하십시오.
               </p>
             </div>
 
@@ -851,7 +887,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
 
                 <div className="space-y-5">
                   {p.hazards.map((h) => {
-                    const needsAction = h.riskScore >= 9;
+                    const needsAction = requiresRiskReduction(h.riskLevel);
 
                     return (
                       <div key={h.id} className="border border-slate-200 rounded-xl p-4 bg-slate-50/30 space-y-4">
@@ -864,34 +900,25 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                           </div>
                         </div>
 
-                        {/* Estimations Likelihood / Severity Slider / Selectors */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-3 rounded-xl border border-slate-200">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white p-3 rounded-xl border border-slate-200">
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-400 mb-1">발생 빈도 (Likelihood - 1 to 5)</label>
+                            <label className="block text-[10px] font-bold text-slate-400 mb-1">최초 위험성 수준</label>
                             <select
-                              value={h.likelihood}
-                              onChange={(e) => handleUpdateHazard(p.id, h.id, { likelihood: parseInt(e.target.value) })}
-                              className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs font-bold font-mono"
+                              value={h.riskLevel}
+                              onChange={(e) => handleUpdateHazard(p.id, h.id, { riskLevel: e.target.value as RiskLevel })}
+                              className="w-full bg-slate-50 border border-slate-200 rounded p-1.5 text-xs font-bold"
                             >
-                              {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}단계</option>)}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-400 mb-1">치명 강도 (Severity - 1 to 5)</label>
-                            <select
-                              value={h.severity}
-                              onChange={(e) => handleUpdateHazard(p.id, h.id, { severity: parseInt(e.target.value) })}
-                              className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-xs font-bold font-mono"
-                            >
-                              {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}단계</option>)}
+                              <option value="High">상</option>
+                              <option value="Medium">중</option>
+                              <option value="Low">하</option>
                             </select>
                           </div>
 
                           <div className="flex flex-col justify-center items-center bg-slate-50/50 rounded-lg p-2 border border-slate-100">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase">위험 점수 (L x S)</span>
+                            <span className="text-[9px] font-bold text-slate-400">위험성 결정</span>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`text-xl font-black font-mono ${needsAction ? 'text-red-600 animate-pulse' : 'text-slate-800'}`}>
-                                {h.riskScore}점
+                              <span className={`text-xl font-black ${needsAction ? 'text-red-600' : 'text-slate-800'}`}>
+                                {RISK_LEVEL_LABELS[h.riskLevel]}
                               </span>
                               <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
                                 h.riskLevel === 'High' ? 'bg-red-100 text-red-800' :
@@ -910,7 +937,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                           {needsAction && (
                             <div className="text-[10px] font-bold text-red-600 flex items-center gap-1">
                               <ShieldAlert size={12} />
-                              위험도가 9점 이상으로 법적 고시에 따른 감소대책 기재 및 잔류위험 평가가 의무적입니다.
+                              위험성이 상 또는 중으로 판단되어 감소대책 기재 및 잔류위험 평가가 필요합니다.
                             </div>
                           )}
 
@@ -959,26 +986,18 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                           </div>
 
                           {/* Residual post improvement evaluation */}
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2.5 border-t border-slate-100 items-center">
-                            <span className="text-[10px] font-bold text-slate-500 block">개선 조치 후 예상 잔류위험 추정:</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-slate-100 items-center">
+                            <span className="text-[10px] font-bold text-slate-500 block">개선 조치 후 예상 잔류위험:</span>
                             <div>
-                              <label className="block text-[9px] text-slate-400">잔류 빈도 (L')</label>
+                              <label className="block text-[9px] text-slate-400">잔류 위험성 수준</label>
                               <select
-                                value={h.postLikelihood}
-                                onChange={(e) => handleUpdateHazard(p.id, h.id, { postLikelihood: parseInt(e.target.value) })}
+                                value={h.postRiskLevel}
+                                onChange={(e) => handleUpdateHazard(p.id, h.id, { postRiskLevel: e.target.value as RiskLevel })}
                                 className="w-full bg-white border border-slate-200 rounded p-1 text-[11px]"
                               >
-                                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}단계</option>)}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-[9px] text-slate-400">잔류 강도 (S')</label>
-                              <select
-                                value={h.postSeverity}
-                                onChange={(e) => handleUpdateHazard(p.id, h.id, { postSeverity: parseInt(e.target.value) })}
-                                className="w-full bg-white border border-slate-200 rounded p-1 text-[11px]"
-                              >
-                                {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}단계</option>)}
+                                <option value="High">상</option>
+                                <option value="Medium">중</option>
+                                <option value="Low">하</option>
                               </select>
                             </div>
                           </div>

@@ -11,7 +11,12 @@ const config: PlaywrightTestConfig = {
   },
   projects: [
     { name: 'chromium', use: { browserName: 'chromium' } }
-  ]
+  ],
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: true,
+  },
 };
 
 export default config;
