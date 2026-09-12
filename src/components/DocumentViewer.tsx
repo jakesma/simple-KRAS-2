@@ -243,9 +243,6 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
           
           {/* Document Common Title Header */}
           <div className="text-center border-b-4 border-double border-slate-900 pb-4 mb-8" id="sheet-title-header">
-            <p className="text-xs font-semibold text-slate-700 mb-1.5 print:text-slate-600 tracking-wide">
-              SIMPLE KRAS - AI 위험성평가 시스템
-            </p>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase mb-1">
               {activeTab === 'survey' && '안 전 보 건 정 보 사 전 조 사 서'}
               {activeTab === 'hazard' && '유 해 · 위 험 요 인 파 악 표'}
