@@ -36,7 +36,16 @@ export const EXPERT_MACHINERY_LIST = [
   '펌프 / 모터 (Pump & Motor)',
   '흄 제거 장치 (Fume Extraction System)',
   '증기 보일러 (Steam Boiler)',
-  '압축기 (Air Compressor)'
+  '압축기 (Air Compressor)',
+  '가압식 하이스 전용로 (Pressurized HSS Furnace)',
+  '고성능 냉각 칠러 (High-Performance Cooling Chiller)',
+  '질소 분위기 템퍼링로 (Nitrogen Atmosphere Tempering Furnace)',
+  '대형 서브제로 처리기 (Large Subzero Treatment Unit)',
+  'PVD 코팅 장비 (PVD Coating System)',
+  'TD 표면처리로 (TD Coating Furnace)',
+  '평면 연마기 (Surface Grinder)',
+  '금형 교정기 (Die Straightening Press)',
+  '리브 경도계 (Leeb Hardness Tester)'
 ];
 
 export const EXPERT_PROCESS_TEMPLATES = [
@@ -362,6 +371,170 @@ export const EXPERT_PROCESS_TEMPLATES = [
         reductionMeasures: '고온 부품 주변 방사열 차단판 설치, 내열성 작업복 및 면 안전모 지급, 고온 부품 취급용 특수 집게 및 가열패드 제공',
         suggestedLikelihood: 3,
         suggestedSeverity: 3
+      }
+    ]
+  },
+  {
+    processName: '하이스 L-H-H 가압 열처리 공정',
+    detailedWorkContent: 'SKH51 등 고속도공구강을 가압식 전용로에서 용도별 조건으로 저온 소입한 뒤 고성능 칠러로 급속 냉각하고, 질소 분위기 템퍼링을 반복하여 내마모성과 충격강도를 확보하는 공정',
+    equipmentUsed: ['가압식 하이스 전용로 (Pressurized HSS Furnace)', '고성능 냉각 칠러 (High-Performance Cooling Chiller)', '질소 분위기 템퍼링로 (Nitrogen Atmosphere Tempering Furnace)', '천장 크레인 / 호이스트 (Overhead Crane)'],
+    chemicalsUsed: ['질소 가스 (N2)', '아르곤 가스 (Ar)', '냉각 가스', '냉각유'],
+    hazards: [
+      {
+        machineryRelated: '가압식 하이스 전용로 (Pressurized HSS Furnace)',
+        hazardCategory: 'Thermal' as HazardCategory,
+        accidentType: '화상 (Burn)',
+        hazardSituation: '고온 소입 사이클이 끝나기 전에 로 문을 열거나 장입물을 인출하는 과정에서 고온 부품과 방사열에 노출되어 화상을 입음',
+        legalBasis: '산업안전보건기준에 관한 규칙 제232조 (고온물체에 의한 화상 방지)',
+        currentSafetyMeasures: '내열장갑 착용 및 작업자 육안 확인',
+        reductionMeasures: '온도·압력·냉각 완료 인터록과 도어 잠금장치 설치, 원격 조작 및 방열 차단막 적용, 내열 작업복·안면보호구 지급',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 4
+      },
+      {
+        machineryRelated: '고성능 냉각 칠러 (High-Performance Cooling Chiller)',
+        hazardCategory: 'Mechanical' as HazardCategory,
+        accidentType: '맞음 (Struck by)',
+        hazardSituation: '고압 냉각 배관이나 호스의 연결부가 파손되어 냉각 가스 또는 부품이 비산하고 주변 작업자를 타격함',
+        legalBasis: '산업안전보건기준에 관한 규칙 제261조 (고압의 공기·가스 등의 취급)',
+        currentSafetyMeasures: '호스 연결부 주기적 육안 점검',
+        reductionMeasures: '압력계·안전밸브·호스 체결 상태 점검표 운영, 배관 차폐 및 비산 방지 커버 설치, 정비 전 압력 제거와 잠금표지(LOTO) 실시',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 5
+      },
+      {
+        machineryRelated: '질소 분위기 템퍼링로 (Nitrogen Atmosphere Tempering Furnace)',
+        hazardCategory: 'Chemical' as HazardCategory,
+        accidentType: '질식 (Asphyxiation)',
+        hazardSituation: '질소 공급 배관이나 로 도어 실링에서 누출된 질소가 작업장에 축적되어 산소 농도가 낮아지고 작업자가 의식을 잃음',
+        legalBasis: '산업안전보건기준에 관한 규칙 제632조 (산소결핍위험장소의 작업)',
+        currentSafetyMeasures: '일반 환기 및 작업 전 설비 확인',
+        reductionMeasures: '산소농도계와 질소 누출 경보 연동, 연속 기계환기 및 배기 덕트 설치, 가스 차단밸브와 비상대피 절차 운영',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 5
+      }
+    ]
+  },
+  {
+    processName: '진공열처리 및 서브제로 처리 공정',
+    detailedWorkContent: '진공로에서 금형을 가열·소입한 후 대형 서브제로 처리기에서 극저온 냉각하고, 후속 템퍼링과 치수 확인을 수행하는 금형 열처리 공정',
+    equipmentUsed: ['진공열처리로 (Vacuum Heat Treatment Furnace)', '대형 서브제로 처리기 (Large Subzero Treatment Unit)', '고성능 냉각 칠러 (High-Performance Cooling Chiller)', '천장 크레인 / 호이스트 (Overhead Crane)'],
+    chemicalsUsed: ['액화질소 (Liquid Nitrogen, LN2)', '질소 가스 (N2)', '아르곤 가스 (Ar)'],
+    hazards: [
+      {
+        machineryRelated: '대형 서브제로 처리기 (Large Subzero Treatment Unit)',
+        hazardCategory: 'Thermal' as HazardCategory,
+        accidentType: '저온화상 (Cryogenic Burn)',
+        hazardSituation: '액화질소 주입·배출 또는 처리품 인출 중 극저온 표면과 액화질소가 피부에 접촉하여 저온화상을 입음',
+        legalBasis: '산업안전보건기준에 관한 규칙 제232조 (고온물체에 의한 화상 방지) 및 저온물 취급 안전기준',
+        currentSafetyMeasures: '극저온 장갑과 보안경 착용',
+        reductionMeasures: '액화질소 공급 자동화, 처리기 도어·밸브 가드 설치, 극저온용 안면보호구와 장갑 착용 확인, 누출 시 접근금지 절차 운영',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 4
+      },
+      {
+        machineryRelated: '대형 서브제로 처리기 (Large Subzero Treatment Unit)',
+        hazardCategory: 'WorkEnvironment' as HazardCategory,
+        accidentType: '질식 (Asphyxiation)',
+        hazardSituation: '액화질소 기화로 처리실 산소 농도가 급격히 저하되어 작업자가 산소결핍 환경에 노출됨',
+        legalBasis: '산업안전보건기준에 관한 규칙 제632조 (산소결핍위험장소의 작업)',
+        currentSafetyMeasures: '작업 전 산소 농도 일회 측정',
+        reductionMeasures: '산소농도 연속 감시와 19.5% 경보 설정, 비상 배기·자동 차단 연동, 출입 전 환기 확인 및 2인 1조 구조체계 운영',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 5
+      },
+      {
+        machineryRelated: '천장 크레인 / 호이스트 (Overhead Crane)',
+        hazardCategory: 'Mechanical' as HazardCategory,
+        accidentType: '깔림 (Crushed by)',
+        hazardSituation: '대형 금형을 서브제로 처리기에 장입·인출할 때 줄걸이 불량이나 흔들림으로 금형이 떨어져 작업자를 깔리게 함',
+        legalBasis: '산업안전보건기준에 관한 규칙 제147조 (와이어로프 등의 사용 한계)',
+        currentSafetyMeasures: '인양 전 줄걸이 육안 점검',
+        reductionMeasures: '인양 중량·줄걸이 각도 확인, 신호수 지정과 출입통제, 훅 해지장치 및 정격하중 표기, 인양물 하부 진입 금지',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 5
+      }
+    ]
+  },
+  {
+    processName: 'PVD 및 TD 표면처리 공정',
+    detailedWorkContent: '열처리된 금형과 부품을 세척·전처리한 뒤 진공 PVD 코팅 또는 TD 확산 표면처리를 실시하고 냉각·검사를 수행하는 표면처리 공정',
+    equipmentUsed: ['PVD 코팅 장비 (PVD Coating System)', 'TD 표면처리로 (TD Coating Furnace)', '초음파 세척기 (Ultrasonic Cleaner)', '흄 제거 장치 (Fume Extraction System)'],
+    chemicalsUsed: ['세척제', '알칼리 탈지제', '금속 염류 처리제', '코팅 원료'],
+    hazards: [
+      {
+        machineryRelated: 'PVD 코팅 장비 (PVD Coating System)',
+        hazardCategory: 'Electrical' as HazardCategory,
+        accidentType: '감전 (Electric Shock)',
+        hazardSituation: '진공 챔버의 고전압 전원과 플라즈마 발생부를 정비하면서 잔류 전압을 확인하지 않아 감전됨',
+        legalBasis: '산업안전보건기준에 관한 규칙 제302조 (전기 기계·기구의 접지)',
+        currentSafetyMeasures: '정비 전 전원 차단 및 육안 확인',
+        reductionMeasures: '도어 개방 연동 차단, 잔류전압 방전 확인, 전원 차단·잠금표지와 검전 절차 표준화, 정비 작업자 자격관리',
+        suggestedLikelihood: 2,
+        suggestedSeverity: 5
+      },
+      {
+        machineryRelated: 'TD 표면처리로 (TD Coating Furnace)',
+        hazardCategory: 'Chemical' as HazardCategory,
+        accidentType: '중독 (Poisoning)',
+        hazardSituation: 'TD 처리액 취급과 고온 공정 중 발생한 증기·분진을 국소배기 없이 흡입하여 호흡기와 피부가 유해물질에 노출됨',
+        legalBasis: '산업안전보건기준에 관한 규칙 제429조 (국소배기장치의 성능)',
+        currentSafetyMeasures: '일반 마스크와 보호장갑 착용',
+        reductionMeasures: '처리조 밀폐 및 국소배기 성능 점검, 물질안전보건자료 기반 취급교육, 적합한 방독·방진마스크와 내화학 보호구 지급',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 4
+      },
+      {
+        machineryRelated: '초음파 세척기 (Ultrasonic Cleaner)',
+        hazardCategory: 'Chemical' as HazardCategory,
+        accidentType: '화상 (Burn)',
+        hazardSituation: '가열된 세척액과 세척 대상물을 꺼내는 과정에서 세척액이 튀어 손과 얼굴에 화상을 입거나 피부염이 발생함',
+        legalBasis: '산업안전보건기준에 관한 규칙 제232조 (고온물체에 의한 화상 방지)',
+        currentSafetyMeasures: '보호장갑과 보안경 착용',
+        reductionMeasures: '세척액 온도 제한과 덮개·비산방지판 설치, 인양용 바스켓 사용, 세척제 농도관리와 세안·세척 설비 비치',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 3
+      }
+    ]
+  },
+  {
+    processName: '금형 연마·교정 및 경도검사 공정',
+    detailedWorkContent: '열처리된 금형을 샌딩·평면 연마하고 교정기로 치수를 보정한 후 리브 경도계 등 시험계측기로 경도와 품질을 확인하는 후처리 공정',
+    equipmentUsed: ['샌딩 머신 (Sanding Machine)', '평면 연마기 (Surface Grinder)', '금형 교정기 (Die Straightening Press)', '리브 경도계 (Leeb Hardness Tester)', '흄 제거 장치 (Fume Extraction System)'],
+    chemicalsUsed: ['연마재', '절삭유 (Coolant)', '세척제'],
+    hazards: [
+      {
+        machineryRelated: '평면 연마기 (Surface Grinder)',
+        hazardCategory: 'Mechanical' as HazardCategory,
+        accidentType: '맞음 (Struck by)',
+        hazardSituation: '연마숫돌의 균열이나 과속 회전으로 숫돌이 파손되어 파편이 작업자에게 비산함',
+        legalBasis: '산업안전보건기준에 관한 규칙 제92조 (정비 등의 작업 시 운전정지 등)',
+        currentSafetyMeasures: '숫돌 상태 육안 점검 및 보안경 착용',
+        reductionMeasures: '숫돌 사용 전 타음검사와 최고사용원주속도 확인, 덮개와 투명 비산방지판 설치, 작업구역 출입통제 및 안면보호구 착용',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 4
+      },
+      {
+        machineryRelated: '샌딩 머신 (Sanding Machine)',
+        hazardCategory: 'Physical' as HazardCategory,
+        accidentType: '분진 흡입 (Dust Inhalation)',
+        hazardSituation: '금속 연마·샌딩 중 발생한 미세 금속분진을 국소배기 없이 흡입하여 호흡기 질환과 안구 자극이 발생함',
+        legalBasis: '산업안전보건기준에 관한 규칙 제422조 (관리대상 유해물질과 관계있는 설비)',
+        currentSafetyMeasures: '방진마스크 착용 및 작업 후 청소',
+        reductionMeasures: '연마점 국소배기와 집진기 풍량 점검, 압축공기로 분진을 날리는 청소 금지, 적합한 방진마스크·보안경과 정기 작업환경측정 실시',
+        suggestedLikelihood: 4,
+        suggestedSeverity: 3
+      },
+      {
+        machineryRelated: '금형 교정기 (Die Straightening Press)',
+        hazardCategory: 'Mechanical' as HazardCategory,
+        accidentType: '끼임 (Entrapment)',
+        hazardSituation: '금형을 교정 위치에 맞추는 중 프레스 슬라이드가 오작동하여 손가락이나 손이 금형과 작업대 사이에 끼임',
+        legalBasis: '산업안전보건기준에 관한 규칙 제103조 (프레스 등의 방호장치)',
+        currentSafetyMeasures: '수동 조작 버튼과 작업자 주의에 의존',
+        reductionMeasures: '양손 조작식 제어와 광전자식 방호장치 적용, 금형 고정 지그 사용, 정비·조정 시 전원 차단 및 불시 작동 방지',
+        suggestedLikelihood: 3,
+        suggestedSeverity: 4
       }
     ]
   }

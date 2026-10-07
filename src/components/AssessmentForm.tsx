@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { RiskAssessment, ManufacturingProcess, HazardItem, HazardCategory, CompanyProfile, AuditLog } from '../types';
-import { EXPERT_MACHINERY_LIST, getSuggestedHazards } from '../data/expertDatabase';
+import { CONSTRUCTION_EQUIPMENT_LIST, getConstructionSuggestedHazards } from '../data/constructionExpertDatabase';
 import { 
   Building2, Users, Sliders, ClipboardList, AlertTriangle, 
   CheckCircle, ShieldAlert, Cpu, Sparkles, Plus, Trash2, 
@@ -25,6 +25,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
   const [assessmentType, setAssessmentType] = useState<'regular' | 'occasional'>(assessment.assessmentType);
   const [profile, setProfile] = useState<CompanyProfile>({ ...assessment.companyProfile });
   const [processes, setProcesses] = useState<ManufacturingProcess[]>([...assessment.processes]);
+  const [profileSavedAt, setProfileSavedAt] = useState<string | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([
     {
       id: 'initial',
@@ -47,7 +48,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
   const handleAddProcess = () => {
     const newProc: ManufacturingProcess = {
       id: `proc_${Date.now()}`,
-      processName: '신규 제조 공정',
+      processName: '신규 건설 작업',
       detailedWorkContent: '',
       supervisor: '',
       workerNames: ['작업자1'],
@@ -119,10 +120,10 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
 
     const newHazard: HazardItem = {
       id: `haz_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      hazardCategory: 'Mechanical',
-      machineryRelated: proc.equipmentUsed[0] || '공정 범용 자재',
+      hazardCategory: 'Physical',
+      machineryRelated: proc.equipmentUsed[0] || '현장 작업구역',
       hazardSituation: '',
-      accidentType: '끼임',
+      accidentType: '추락',
       legalBasis: '',
       currentSafetyMeasures: '',
       likelihood: 3,
@@ -161,7 +162,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
         body: JSON.stringify({
           processName: proc.processName,
           detailedWorkContent: proc.detailedWorkContent,
-          machineryRelated: proc.equipmentUsed.join(', ') || '일반 공업 도구'
+          machineryRelated: proc.equipmentUsed.join(', ') || '일반 건설 공구'
         })
       });
 
@@ -201,7 +202,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
         logLocalAudit('AI 분석 완료', `'${proc.processName}' 공정에 AI 추천 정밀 요인을 주입함.`);
       } else {
         // 2. Fallback to expert pre-populated database if Gemini is offline
-        const localItems = getSuggestedHazards(proc.processName, proc.equipmentUsed);
+        const localItems = getConstructionSuggestedHazards(proc.processName, proc.equipmentUsed);
         
         const mappedLocal = localItems.map((raw, idx) => {
           const initialScore = raw.suggestedLikelihood * raw.suggestedSeverity;
@@ -211,7 +212,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
           return {
             id: `haz_local_${Date.now()}_${idx}`,
             hazardCategory: raw.hazardCategory,
-            machineryRelated: raw.machineryRelated,
+            machineryRelated: raw.machinery,
             hazardSituation: raw.hazardSituation,
             accidentType: raw.accidentType,
             legalBasis: raw.legalBasis,
@@ -238,13 +239,13 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
     } catch (err) {
       console.error(err);
       // Fail gracefully to local database
-      const localItems = getSuggestedHazards(proc.processName, proc.equipmentUsed);
+      const localItems = getConstructionSuggestedHazards(proc.processName, proc.equipmentUsed);
       const mappedLocal = localItems.map((raw, idx) => {
         const score = raw.suggestedLikelihood * raw.suggestedSeverity;
         return {
           id: `haz_local_${Date.now()}_${idx}`,
           hazardCategory: raw.hazardCategory,
-          machineryRelated: raw.machineryRelated,
+          machineryRelated: raw.machinery,
           hazardSituation: raw.hazardSituation,
           accidentType: raw.accidentType,
           legalBasis: raw.legalBasis,
@@ -325,6 +326,11 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
 
     logLocalAudit('기록 물리적 저장', `평가서 상태를 '${finalStatus}'(으)로 최종 보존하였습니다.`);
     onSave(updated);
+  };
+
+  const handleSaveProfile = () => {
+    handleSaveAssessment('draft');
+    setProfileSavedAt(new Date().toLocaleTimeString());
   };
 
   return (
@@ -503,6 +509,21 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                   />
                 </div>
               </div>
+
+              <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-5">
+                <span className="text-xs text-slate-400">
+                  {profileSavedAt ? `저장됨 ${profileSavedAt}` : '입력한 회사 정보는 위험성평가 문서에 반영됩니다.'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700"
+                  id="profile-save-btn"
+                >
+                  <Save size={14} />
+                  프로필 저장
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -597,7 +618,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                 <div>
                   <label className="block text-xs font-bold text-slate-500 mb-1.5">공정 내 사용 주요 유해 기계·기구 (선택)</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 border border-slate-100 bg-slate-50 p-3 rounded-lg max-h-36 overflow-y-auto">
-                    {EXPERT_MACHINERY_LIST.map((mach) => {
+                    {CONSTRUCTION_EQUIPMENT_LIST.map((mach) => {
                       const selected = p.equipmentUsed.includes(mach);
                       return (
                         <button

@@ -5,16 +5,18 @@
 
 import { useState } from 'react';
 import { RiskAssessment, HazardItem } from '../types';
-import { FileText, Printer, ArrowLeft, Download, ShieldAlert, CheckCircle2, Copy, Check } from 'lucide-react';
+import { FileText, Printer, ArrowLeft, Download, ShieldAlert, CheckCircle2, Copy, Check, Pencil, ClipboardCheck } from 'lucide-react';
 
 interface DocumentViewerProps {
   assessment: RiskAssessment;
   onBack: () => void;
+  onCreateTbm: () => void;
+  onEdit: () => void;
 }
 
 type DocumentTab = 'survey' | 'hazard' | 'estimation' | 'reduction' | 'kras';
 
-export default function DocumentViewer({ assessment, onBack }: DocumentViewerProps) {
+export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit }: DocumentViewerProps) {
   const [activeTab, setActiveTab] = useState<DocumentTab>('kras');
   const [copied, setCopied] = useState(false);
 
@@ -97,6 +99,22 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
             </div>
           </div>
           <div className="flex items-center gap-2 self-end md:self-auto">
+            <button
+              onClick={onCreateTbm}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+              id="doc-create-tbm-btn"
+            >
+              <ClipboardCheck size={14} />
+              오늘 TBM 회의록
+            </button>
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+              id="doc-edit-btn"
+            >
+              <Pencil size={14} />
+              수정하기
+            </button>
             <button
               onClick={handleCopyMarkdown}
               className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold transition"
@@ -200,9 +218,6 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
           
           {/* Document Common Title Header */}
           <div className="text-center border-b-4 border-double border-slate-900 pb-4 mb-8" id="sheet-title-header">
-            <p className="text-xs font-semibold text-slate-700 mb-1.5 print:text-slate-600 tracking-wide">
-              SIMPLE KRAS - AI 위험성평가 시스템
-            </p>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase mb-1">
               {activeTab === 'survey' && '안 전 보 건 정 보 사 전 조 사 서'}
               {activeTab === 'hazard' && '유 해 · 위 험 요 인 파 악 표'}
@@ -223,8 +238,8 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
               <div className="flex"><span className="w-24 font-bold text-slate-500">사업장명:</span> <span className="text-slate-950">{assessment.companyProfile.companyName}</span></div>
               <div className="flex"><span className="w-24 font-bold text-slate-500">대표자명:</span> <span className="text-slate-950">{assessment.companyProfile.ceoName}</span></div>
               <div className="flex"><span className="w-24 font-bold text-slate-500">소재지:</span> <span className="text-slate-950">{assessment.companyProfile.address}</span></div>
-              <div className="flex"><span className="w-24 font-bold text-slate-500">근로자수:</span> <span className="text-slate-950">{assessment.companyProfile.employeeCount}명</span></div>
-              <div className="flex"><span className="w-24 font-bold text-slate-500">작성일자:</span> <span className="text-slate-950 font-mono">{assessment.createdAt}</span></div>
+              <div className="flex"><span className="w-24 font-bold text-slate-500">근로자수:</span> <span className="w-24 text-right text-slate-950">{assessment.companyProfile.employeeCount} 명</span></div>
+              <div className="flex"><span className="w-24 font-bold text-slate-500">작성일자:</span> <span className="w-24 text-right text-slate-950 font-mono">{assessment.createdAt}</span></div>
             </div>
 
             {/* Right Standard Korean Approval Box */}
@@ -489,21 +504,17 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                 5. KRAS 통합형 표준 위험성평가 종합 결과지 (통합 양식)
               </h3>
               <div className="overflow-x-auto w-full" id="kras-scroll-container">
-                <table className="w-full text-[10px] text-left border-collapse border border-slate-900 min-w-[1000px]" id="kras-master-table">
+                <table className="w-full text-[10px] text-left border-collapse border border-slate-900 min-w-[850px]" id="kras-master-table">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-900 text-slate-700 font-bold text-center">
                       <th className="border-r border-slate-900 p-1.5 w-24">공정명</th>
                       <th className="border-r border-slate-900 p-1.5 w-32">위험요인 (상황 및 예상재해)</th>
                       <th className="border-r border-slate-900 p-1.5 w-24">관련 법적 근거</th>
                       <th className="border-r border-slate-900 p-1.5 w-24">현재 안전조치</th>
-                      <th className="border-r border-slate-900 p-1.5 w-8">L</th>
-                      <th className="border-r border-slate-900 p-1.5 w-8">S</th>
                       <th className="border-r border-slate-900 p-1.5 w-10">위험도</th>
                       <th className="border-r border-slate-900 p-1.5 w-40">위험 감소대책 수립안</th>
                       <th className="border-r border-slate-900 p-1.5 w-20">개선완료 목표일</th>
                       <th className="border-r border-slate-900 p-1.5 w-12">담당자</th>
-                      <th className="border-r border-slate-900 p-1.5 w-8">L'</th>
-                      <th className="border-r border-slate-900 p-1.5 w-8">S'</th>
                       <th className="p-1.5 w-10">잔류도</th>
                     </tr>
                   </thead>
@@ -519,24 +530,50 @@ export default function DocumentViewer({ assessment, onBack }: DocumentViewerPro
                           <td className="border-r border-slate-900 p-1.5 whitespace-pre-wrap">{h.hazardSituation}</td>
                           <td className="border-r border-slate-900 p-1.5 text-slate-600">{h.legalBasis}</td>
                           <td className="border-r border-slate-900 p-1.5 whitespace-pre-wrap">{h.currentSafetyMeasures}</td>
-                          <td className="border-r border-slate-900 p-1 text-center font-mono">{h.likelihood}</td>
-                          <td className="border-r border-slate-900 p-1 text-center font-mono">{h.severity}</td>
-                          <td className={`border-r border-slate-900 p-1 text-center font-bold font-mono ${
-                            h.riskScore >= 9 ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-900'
+                          <td className={`border-r border-slate-900 p-1 text-center font-bold ${
+                            h.riskLevel === 'High' ? 'bg-red-50 text-red-700' :
+                            h.riskLevel === 'Medium' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'
                           }`}>
-                            {h.riskScore}
+                            {h.riskLevel === 'High' ? '상' : h.riskLevel === 'Medium' ? '중' : '하'}
                           </td>
                           <td className="border-r border-slate-900 p-1.5 whitespace-pre-wrap">{h.reductionMeasures || '-'}</td>
                           <td className="border-r border-slate-900 p-1 text-center font-mono text-[9px]">{h.plannedDate || '-'}</td>
                           <td className="border-r border-slate-900 p-1 text-center">{h.responsiblePerson || '-'}</td>
-                          <td className="border-r border-slate-900 p-1 text-center font-mono text-slate-500">{h.postLikelihood || '-'}</td>
-                          <td className="border-r border-slate-900 p-1 text-center font-mono text-slate-500">{h.postSeverity || '-'}</td>
-                          <td className="p-1 text-center font-bold font-mono text-slate-900 bg-slate-50/80">
-                            {h.postRiskScore || '-'}
+                          <td className={`p-1 text-center font-bold ${
+                            h.postRiskLevel === 'High' ? 'bg-red-50 text-red-700' :
+                            h.postRiskLevel === 'Medium' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'
+                          }`}>
+                            {h.postRiskScore ? (h.postRiskLevel === 'High' ? '상' : h.postRiskLevel === 'Medium' ? '중' : '하') : '-'}
                           </td>
                         </tr>
                       ))
                     )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="pt-2" id="worker-signature-section">
+                <h3 className="mb-2 text-sm font-bold text-slate-900">작업자 확인 및 서명부</h3>
+                <table className="w-full border-collapse border border-slate-900 text-xs text-center" id="worker-signature-table">
+                  <thead>
+                    <tr className="bg-slate-50 font-bold text-slate-700">
+                      <th className="w-16 border-r border-slate-900 p-2">NO</th>
+                      <th className="w-[25%] border-r border-slate-900 p-2">이름</th>
+                      <th className="w-[20%] border-r border-slate-900 p-2">직책</th>
+                      <th className="w-[25%] border-r border-slate-900 p-2">서명</th>
+                      <th className="p-2">비고</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 15 }, (_, index) => (
+                      <tr key={index} className="h-9 border-t border-slate-900">
+                        <td className="border-r border-slate-900 font-mono">{index + 1}</td>
+                        <td className="border-r border-slate-900"></td>
+                        <td className="border-r border-slate-900"></td>
+                        <td className="border-r border-slate-900"></td>
+                        <td></td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

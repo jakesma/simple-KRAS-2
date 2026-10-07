@@ -8,23 +8,25 @@ import { RiskAssessment, CompanyProfile, ManufacturingProcess, HazardItem } from
 import AssessmentList from './components/AssessmentList';
 import AssessmentForm from './components/AssessmentForm';
 import DocumentViewer from './components/DocumentViewer';
+import TbmMeetingForm from './components/TbmMeetingForm';
 import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
 import PaymentPage from './components/PaymentPage';
-import { EXPERT_PROCESS_TEMPLATES } from './data/expertDatabase';
+import CategorySelector from './components/CategorySelector';
+import { ConstructionSubCategory, createConstructionProcess } from './data/constructionCategories';
 import { ShieldCheck, Layers, Info, LogOut } from 'lucide-react';
 import { onAuthStateChanged, getCurrentUser, logOut, AuthUser } from './config/auth';
 import { getUserAssessments, saveAssessment, deleteAssessment, migrateLocalStorageToFirestore } from './config/firestore';
 
 // Default corporate profile
 const DEFAULT_PROFILE: CompanyProfile = {
-  companyName: '(주)우성정밀공업',
-  ceoName: '김우성',
-  address: '경기도 시흥시 시화벤처로 234 반월국가산업단지',
-  employeeCount: 45,
-  businessRegNo: '124-81-99882',
-  siteManager: '이주형 부장',
-  department: '안전관리부'
+  companyName: '',
+  ceoName: '',
+  address: '',
+  employeeCount: '',
+  businessRegNo: '',
+  siteManager: '',
+  department: ''
 };
 
 // Seed realistic assessment data if localstorage is empty
@@ -143,23 +145,41 @@ const INITIAL_ASSESSMENTS: RiskAssessment[] = [
   }
 ];
 
+const CONSTRUCTION_INITIAL_ASSESSMENTS: RiskAssessment[] = [{
+  id: 'construction_sample_1',
+  title: '2026년 상반기 공동주택 골조공사 정기 위험성평가',
+  assessmentType: 'regular',
+  createdAt: '2026-08-01',
+  updatedAt: '2026-08-01',
+  version: 1,
+  status: 'draft',
+  companyProfile: DEFAULT_PROFILE,
+  processes: [createConstructionProcess({
+    id: 'scaffolding', name: '비계 설치·해체', description: '강관비계와 작업발판을 설치하거나 해체하는 작업',
+    equipment: ['강관비계', '작업발판', '안전대'], materials: ['강관', '클램프', '안전망']
+  })]
+}];
+
 export default function App() {
   const [showLanding, setShowLanding] = useState(() => {
-    // Check if user has visited before
-    const hasVisited = localStorage.getItem('kras_dashboard_visited');
-    return !hasVisited;
+    // Unauthenticated visitors always start on the main page.
+    return true;
   });
+
+  // Category selector state
+  const [showCategorySelector, setShowCategorySelector] = useState(false);
   
   // Firebase Auth state
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [migratingData, setMigratingData] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(() => localStorage.getItem('kras_construction_guest_mode') === 'true');
 
   // Dashboard state
   const [activeTab, setActiveTab] = useState<'assessments'>('assessments');
   const [assessments, setAssessments] = useState<RiskAssessment[]>([]);
   const [editingAssessmentId, setEditingAssessmentId] = useState<string | null>(null);
   const [viewingAssessmentId, setViewingAssessmentId] = useState<string | null>(null);
+  const [tbmAssessmentId, setTbmAssessmentId] = useState<string | null>(null);
   
   // Payment state
   const [showPayment, setShowPayment] = useState(false);
@@ -172,57 +192,55 @@ export default function App() {
       setAuthUser(user);
       
       if (user) {
-        // User is logged in - load data from Firestore
-        setMigratingData(true);
-        
-        // Try to load from Firestore
-        const firestoreResult = await getUserAssessments(user.uid);
-        
-        if (firestoreResult.success && firestoreResult.assessments) {
-          setAssessments(firestoreResult.assessments);
-          // Don't need to use localStorage for logged-in users
-        } else {
-          // If Firestore is empty, try to migrate from localStorage
-          const localData = localStorage.getItem('kras_manufacturing_assessments');
-          if (localData) {
-            try {
-              const parsedData = JSON.parse(localData) as RiskAssessment[];
-              const migrationResult = await migrateLocalStorageToFirestore(user.uid, parsedData);
-              
-              if (migrationResult.success) {
-                console.log(`✅ Migrated ${migrationResult.count} assessments to Firestore`);
-                // Reload from Firestore after migration
-                const updatedResult = await getUserAssessments(user.uid);
-                if (updatedResult.success && updatedResult.assessments) {
-                  setAssessments(updatedResult.assessments);
-                }
-              }
-            } catch (err) {
-              console.error('Migration error:', err);
-              // Still use localStorage if migration fails
-              setAssessments(INITIAL_ASSESSMENTS);
-            }
-          } else {
-            // No local data, start with empty or sample data
-            setAssessments(INITIAL_ASSESSMENTS);
+        localStorage.removeItem('kras_construction_guest_mode');
+        setIsGuestMode(false);
+        setShowLanding(false);
+        // Show local data immediately; synchronize with Firestore in the background.
+        let localAssessments: RiskAssessment[] | null = null;
+        const localData = localStorage.getItem('kras_construction_assessments');
+        if (localData) {
+          try {
+            localAssessments = JSON.parse(localData) as RiskAssessment[];
+          } catch (err) {
+            console.error('Error parsing localStorage:', err);
           }
         }
-        
-        setMigratingData(false);
+
+        setAssessments(localAssessments && localAssessments.length > 0 ? localAssessments : CONSTRUCTION_INITIAL_ASSESSMENTS);
+
+        void getUserAssessments(user.uid).then((firestoreResult) => {
+          if (firestoreResult.success && firestoreResult.assessments && firestoreResult.assessments.length > 0) {
+            setAssessments(firestoreResult.assessments);
+            return;
+          }
+
+          if (localAssessments && localAssessments.length > 0) {
+            // Keep migration off the critical path so the dashboard opens immediately.
+            void migrateLocalStorageToFirestore(user.uid, localAssessments).then((migrationResult) => {
+              if (migrationResult.success) {
+                console.log(`✅ Migrated ${migrationResult.count} assessments to Firestore`);
+              }
+            }).catch((err) => {
+              console.error('Migration error:', err);
+            });
+          }
+        }).catch((err) => {
+          console.error('Firestore sync skipped:', err);
+        });
+
       } else {
         // User is logged out - load from localStorage
-        const localData = localStorage.getItem('kras_manufacturing_assessments');
+        const localData = localStorage.getItem('kras_construction_assessments');
         if (localData) {
           try {
             const parsedData = JSON.parse(localData) as RiskAssessment[];
             setAssessments(parsedData);
           } catch (err) {
             console.error('Error parsing localStorage:', err);
-            setAssessments(INITIAL_ASSESSMENTS);
+            setAssessments(CONSTRUCTION_INITIAL_ASSESSMENTS);
           }
         } else {
-          // No local data, use initial assessments for demo
-          setAssessments(INITIAL_ASSESSMENTS);
+          setAssessments(CONSTRUCTION_INITIAL_ASSESSMENTS);
         }
         setEditingAssessmentId(null);
         setViewingAssessmentId(null);
@@ -263,7 +281,7 @@ export default function App() {
       }
     } else {
       // Fallback to localStorage if not logged in
-      localStorage.setItem('kras_manufacturing_assessments', JSON.stringify(updated));
+      localStorage.setItem('kras_construction_assessments', JSON.stringify(updated));
     }
   };
 
@@ -271,7 +289,7 @@ export default function App() {
   const handleCreateNew = () => {
     const newAssess: RiskAssessment = {
       id: `assess_${Date.now()}`,
-      title: `${new Date().getFullYear()}년도 신규 제조업 수시 위험성평가`,
+      title: `${new Date().getFullYear()}년도 신규 건설현장 수시 위험성평가`,
       assessmentType: 'occasional',
       createdAt: new Date().toISOString().split('T')[0],
       updatedAt: new Date().toISOString().split('T')[0],
@@ -281,11 +299,11 @@ export default function App() {
       processes: [
         {
           id: `proc_${Date.now()}`,
-          processName: '부품 아크 용접 공정',
-          detailedWorkContent: '수동 아크 용접 설비를 사용해 철판 부품 가가공 및 도금 조립을 전개하는 현장 활동.',
+          processName: '비계 설치·해체',
+          detailedWorkContent: '강관비계와 작업발판을 설치하고 안전난간 및 안전망 상태를 점검하는 현장 작업.',
           supervisor: DEFAULT_PROFILE.siteManager || '안전관리자',
           workerNames: ['작업자A'],
-          equipmentUsed: ['아크 용접기 (Arc Welder)'],
+          equipmentUsed: ['강관비계', '작업발판', '안전대'],
           chemicalsUsed: [],
           hazards: []
         }
@@ -368,16 +386,19 @@ export default function App() {
   // Get active editing assessment
   const activeEditing = assessments.find(a => a.id === editingAssessmentId);
   const activeViewing = assessments.find(a => a.id === viewingAssessmentId);
+  const activeTbmAssessment = assessments.find(a => a.id === tbmAssessmentId);
 
   const handleEnterDashboard = () => {
-    localStorage.setItem('kras_dashboard_visited', 'true');
+    localStorage.setItem('kras_construction_dashboard_visited', 'true');
     setShowLanding(false);
   };
 
   const handleLogout = async () => {
     if (window.confirm('정말 로그아웃하시겠습니까?')) {
-      const result = await logOut();
+      const result = authUser ? await logOut() : { success: true };
       if (result.success) {
+        localStorage.removeItem('kras_construction_guest_mode');
+        setIsGuestMode(false);
         setAuthUser(null);
         setAssessments([]);
         setEditingAssessmentId(null);
@@ -385,6 +406,12 @@ export default function App() {
         setShowLanding(true);
       }
     }
+  };
+
+  const handleGuestAccess = () => {
+    localStorage.setItem('kras_construction_guest_mode', 'true');
+    setIsGuestMode(true);
+    setShowLanding(false);
   };
 
   // Show loading state while Firebase auth is initializing
@@ -406,28 +433,78 @@ export default function App() {
     return (
       <LandingPage 
         onStartClick={handleEnterDashboard}
+        onCategoryClick={() => {
+          setShowCategorySelector(true);
+          setShowLanding(false);
+        }}
         onPaymentClick={(plan, amount) => {
           setPaymentPlan(plan);
           setPaymentAmount(amount);
           setShowPayment(true);
+          setShowLanding(false);
         }}
       />
     );
   }
 
-  // Show auth page only if user explicitly tries to save (not here anymore)
-
-  // Show data migration state
-  if (migratingData) {
+  // Show category selector
+  if (showCategorySelector) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4">
-            <ShieldCheck className="w-8 h-8 text-emerald-600 animate-pulse" />
-          </div>
-          <p className="text-gray-600 font-semibold">데이터 동기화 중...</p>
-        </div>
-      </div>
+      <CategorySelector
+        onSelectCategory={(category: ConstructionSubCategory) => {
+          // Create a new assessment with the selected category
+          setShowCategorySelector(false);
+
+          const categoryProcess = createConstructionProcess(category);
+
+          // Create a new assessment
+          const newAssessment: RiskAssessment = {
+            id: `assess_${Date.now()}`,
+            title: `${category.name} 위험성평가`,
+            assessmentType: 'regular',
+            createdAt: new Date().toISOString().split('T')[0],
+            updatedAt: new Date().toISOString().split('T')[0],
+            version: 1,
+            status: 'draft',
+            companyProfile: DEFAULT_PROFILE,
+            processes: [
+              {
+                id: `proc_${Date.now()}`,
+                ...categoryProcess
+              } as ManufacturingProcess
+            ]
+          };
+
+          setAssessments([newAssessment, ...assessments]);
+          setViewingAssessmentId(newAssessment.id);
+        }}
+        onBack={() => {
+          setShowCategorySelector(false);
+          setShowLanding(true);
+        }}
+      />
+    );
+  }
+
+  // Require authentication before opening the assessment dashboard.
+  if (!authUser && !isGuestMode) {
+    return (
+      <AuthPage
+        onAuthSuccess={() => setShowLanding(false)}
+        onGuestAccess={handleGuestAccess}
+      />
+    );
+  }
+
+  if (activeTbmAssessment) {
+    return (
+      <TbmMeetingForm
+        assessment={activeTbmAssessment}
+        onBack={() => {
+          setTbmAssessmentId(null);
+          setViewingAssessmentId(activeTbmAssessment.id);
+        }}
+      />
     );
   }
 
@@ -445,7 +522,7 @@ export default function App() {
             </div>
             <div>
               <span className="text-[10px] font-bold text-emerald-400 block uppercase tracking-wider leading-none">B2B Safety Platform</span>
-              <h1 className="text-sm font-black text-white tracking-tight">KRAS 제조업 위험성평가 생성기</h1>
+              <h1 className="text-sm font-black text-white tracking-tight">KRAS 건설업 위험성평가 생성기</h1>
             </div>
           </div>
 
@@ -473,8 +550,8 @@ export default function App() {
           {/* User Meta */}
           <div className="hidden sm:flex items-center gap-3 text-xs border-l border-[#34495E] pl-4" id="header-user-badge">
             <div className="text-right">
-              <span className="text-slate-400 block text-[10px]">로그인 사용자</span>
-              <strong className="text-slate-200 text-[11px] font-semibold">{authUser?.displayName || authUser?.email}</strong>
+              <span className="text-slate-400 block text-[10px]">{authUser ? '로그인 사용자' : '비회원 사용자'}</span>
+              <strong className="text-slate-200 text-[11px] font-semibold">{authUser?.displayName || authUser?.email || '비회원'}</strong>
             </div>
             <div className="w-8 h-8 rounded-full bg-slate-700/80 flex items-center justify-center font-bold text-slate-200">
               {authUser?.displayName?.[0] || authUser?.email?.[0] || '사'}
@@ -498,8 +575,7 @@ export default function App() {
             amount={paymentAmount}
             description={`SIMPLE KRAS ${paymentPlan} 플랜 월간 구독료`}
             onSuccess={() => {
-              setShowPayment(false);
-              // 결제 성공 후 처리 로직
+              // 결제 성공 후 처리 로직 (상태 업데이트 등)
               console.log('결제 완료:', paymentPlan, paymentAmount);
             }}
             onCancel={() => setShowPayment(false)}
@@ -508,6 +584,14 @@ export default function App() {
           <DocumentViewer
             assessment={activeViewing}
             onBack={() => setViewingAssessmentId(null)}
+            onCreateTbm={() => {
+              setViewingAssessmentId(null);
+              setTbmAssessmentId(activeViewing.id);
+            }}
+            onEdit={() => {
+              setEditingAssessmentId(activeViewing.id);
+              setViewingAssessmentId(null);
+            }}
           />
         ) : activeEditing ? (
           <AssessmentForm
@@ -519,6 +603,11 @@ export default function App() {
         ) : (
           <AssessmentList
             assessments={assessments}
+            onBackToHome={() => {
+              setEditingAssessmentId(null);
+              setViewingAssessmentId(null);
+              setShowLanding(true);
+            }}
             onCreateNew={handleCreateNew}
             onSelect={handleSelect}
             onViewDoc={handleViewDoc}
@@ -533,7 +622,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4" id="footer-inner">
           <div className="flex items-center gap-1">
             <Info size={14} />
-            <span>KOSHA KRAS 5단계 제조 위험성 가이드 연동 서비스</span>
+            <span>KOSHA KRAS 5단계 건설 위험성평가 가이드 연동 서비스</span>
           </div>
           <div>© 2026 KRAS Generator Inc. All Rights Reserved.</div>
         </div>

@@ -683,7 +683,10 @@ export default function PaymentPage({
             </div>
 
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => {
+                if (onCancel) onCancel();
+                else window.location.href = '/';
+              }}
               className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
             >
               홈으로 돌아가기

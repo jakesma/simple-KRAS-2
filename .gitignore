@@ -11,3 +11,5 @@ coverage/
 
 # OMC runtime state
 .omc/
+
+.env*

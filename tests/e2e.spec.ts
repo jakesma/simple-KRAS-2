@@ -7,6 +7,7 @@ test.describe('KRAS App basic flows', () => {
     await page.evaluate(() => {
       // Do NOT set kras_dashboard_visited - show LandingPage
       localStorage.removeItem('kras_dashboard_visited');
+      localStorage.removeItem('kras_guest_mode');
       // Reset assessments to sample data
       localStorage.setItem('kras_manufacturing_assessments', JSON.stringify([
         {
@@ -67,7 +68,7 @@ test.describe('KRAS App basic flows', () => {
     // Step 1: Click "Create" button on Landing Page
     const landingButton = page.locator('button').filter({ hasText: '신규 위험성평가 생성' }).first();
     await landingButton.click();
-    await page.waitForTimeout(500);
+    await page.getByRole('button', { name: '비회원으로 계속하기' }).click();
     
     // Step 2: Now we should be on Dashboard, get initial count
     await page.waitForSelector('main', { timeout: 5000 });

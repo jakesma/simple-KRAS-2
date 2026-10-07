@@ -15,8 +15,8 @@ import { db } from './firebase';
 import { RiskAssessment } from '../types';
 
 // Firestore collection paths
-const ASSESSMENTS_COLLECTION = 'assessments';
-const USERS_COLLECTION = 'users';
+const ASSESSMENTS_COLLECTION = 'constructionAssessments';
+const USERS_COLLECTION = 'constructionUsers';
 
 /**
  * Save or update an assessment in Firestore

@@ -1,4 +1,4 @@
-# 🚀 SIMPLE-KRAS 배포 가이드
+# SIMPLE-KRAS 건설업 배포 가이드
 
 SIMPLE-KRAS를 Vercel에 배포하는 완전한 가이드입니다.
 
@@ -6,7 +6,7 @@ SIMPLE-KRAS를 Vercel에 배포하는 완전한 가이드입니다.
 
 1. **GitHub 계정** - 코드를 푸시할 저장소
 2. **Vercel 계정** - https://vercel.com에서 가입
-3. **Firebase 설정 완료**
+3. **건설업 전용 Firebase 프로젝트 설정 완료**
    - Email/Password 인증 활성화 ✅
    - 웹앱 설정값 확인
 
@@ -14,7 +14,7 @@ SIMPLE-KRAS를 Vercel에 배포하는 완전한 가이드입니다.
 
 [Firebase Console](https://console.firebase.google.com)에서:
 
-1. **KRAS 프로젝트** 선택
+1. 제조업 원본과 다른 **건설업 전용 Firebase 프로젝트** 선택 또는 생성
 2. **Project Settings** (⚙️) → **General**
 3. **Web App Configuration** 찾기
 4. 다음 값들을 복사합니다:
@@ -64,12 +64,12 @@ vercel
    - Output Directory: `dist` ✅
 5. **Environment Variables** 추가:
    ```
-   VITE_FIREBASE_API_KEY = AIzaSyDsX3DbwYBFHFzvZZfTghpPBSWU3oLvBbM
-   VITE_FIREBASE_AUTH_DOMAIN = kras1-8da40.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID = kras1-8da40
-   VITE_FIREBASE_STORAGE_BUCKET = kras1-8da40.appspot.com
-   VITE_FIREBASE_MESSAGING_SENDER_ID = 541018613242
-   VITE_FIREBASE_APP_ID = 1:541018613242:web:674857aae8b1775081b043
+   VITE_CONSTRUCTION_FIREBASE_API_KEY = <건설 Firebase API 키>
+   VITE_CONSTRUCTION_FIREBASE_AUTH_DOMAIN = <건설 Firebase 인증 도메인>
+   VITE_CONSTRUCTION_FIREBASE_PROJECT_ID = <건설 Firebase 프로젝트 ID>
+   VITE_CONSTRUCTION_FIREBASE_STORAGE_BUCKET = <건설 Firebase 스토리지 버킷>
+   VITE_CONSTRUCTION_FIREBASE_MESSAGING_SENDER_ID = <건설 Firebase 발신자 ID>
+   VITE_CONSTRUCTION_FIREBASE_APP_ID = <건설 Firebase 앱 ID>
    ```
 6. **Deploy** 버튼 클릭
 
@@ -89,13 +89,14 @@ vercel
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 인증된 사용자만 접근
-    match /assessments/{document=**} {
-      allow read, write: if request.auth != null;
+      // 평가서는 작성자 본인만 조회·수정·삭제
+      match /constructionAssessments/{assessmentId} {
+         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+         allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // 사용자 정보
-    match /users/{userId} {
+   match /constructionUsers/{userId} {
       allow read, write: if request.auth.uid == userId;
     }
   }

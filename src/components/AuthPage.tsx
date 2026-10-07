@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, Loader, ArrowRight } from 'lucide-react';
-import { signUp, signIn, sendResetEmail } from '../config/auth';
+import { signUp, signIn, signInWithGoogle, sendResetEmail } from '../config/auth';
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
+  onGuestAccess: () => void;
 }
 
-export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
+export default function AuthPage({ onAuthSuccess, onGuestAccess }: AuthPageProps) {
   const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -98,35 +99,53 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
     setLoading(false);
   };
 
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    const result = await signInWithGoogle();
+
+    if (result.success) {
+      setSuccess('Google 계정으로 로그인되었습니다.');
+      setTimeout(() => {
+        onAuthSuccess();
+      }, 500);
+    } else {
+      setError(result.error || 'Google 로그인에 실패했습니다.');
+    }
+    setLoading(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-5xl">
+    <div className="min-h-screen bg-[#f7f7f7] flex items-center justify-center px-3 py-8">
+      <div className="w-full max-w-[420px]">
         
         {/* Main Container */}
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="block">
           
           {/* Left Side - Form */}
-          <div className="space-y-6">
+          <div className="bg-white border border-gray-200 rounded-3xl shadow-sm px-6 py-7 sm:px-8 space-y-5">
             
             {/* Logo & Title */}
-            <div className="space-y-3">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-red-600 rounded-full shadow-lg hover:shadow-xl transition">
-                <span className="text-2xl font-black text-white">K</span>
+            <div className="space-y-2 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-red-600 rounded-full shadow-sm">
+                <span className="text-xl font-black text-white">K</span>
               </div>
               <div>
-                <h1 className="text-4xl font-black text-gray-900">KRAS</h1>
-                <p className="text-lg text-gray-600 font-semibold">위험성평가 관리 플랫폼</p>
+                <h1 className="text-3xl font-black text-gray-900">KRAS</h1>
+                <p className="text-base text-gray-600 font-semibold">위험성평가 관리 플랫폼</p>
               </div>
             </div>
 
             {/* Subtitle */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-900">
                 {mode === 'login' && '로그인'}
                 {mode === 'signup' && '계정 만들기'}
                 {mode === 'reset' && '비밀번호 재설정'}
               </h2>
-              <p className="text-gray-600 text-sm mt-1">
+              <p className="text-gray-600 text-xs mt-1">
                 {mode === 'login' && '안전하게 로그인하세요'}
                 {mode === 'signup' && '새로운 계정을 만들어 시작하세요'}
                 {mode === 'reset' && '가입한 이메일을 입력하세요'}
@@ -135,36 +154,36 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
             {/* Messages */}
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex gap-3">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-red-700">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-2xl flex gap-3">
+              <div className="p-3 bg-green-50 border border-green-200 rounded-xl flex gap-3">
                 <div className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5">✓</div>
                 <p className="text-sm text-green-700">{success}</p>
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={mode === 'login' ? handleSignIn : mode === 'signup' ? handleSignUp : handleResetPassword} className="space-y-4">
+            <form onSubmit={mode === 'login' ? handleSignIn : mode === 'signup' ? handleSignUp : handleResetPassword} className="space-y-3">
               
               {/* Name Field (Signup only) */}
               {mode === 'signup' && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2.5">
+                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">
                     이름
                   </label>
                   <div className="relative">
-                    <User className="w-5 h-5 text-gray-400 absolute left-4 top-3.5" />
+                    <User className="w-5 h-5 text-gray-400 absolute left-4 top-3" />
                     <input
                       type="text"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       placeholder="홍길동"
-                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition bg-gray-50 hover:bg-white"
+                      className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition bg-gray-50 hover:bg-white"
                       disabled={loading}
                     />
                   </div>
@@ -173,17 +192,17 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
               {/* Email Field */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2.5">
+                <label className="block text-sm font-semibold text-gray-900 mb-1.5">
                   이메일
                 </label>
                 <div className="relative">
-                  <Mail className="w-5 h-5 text-gray-400 absolute left-4 top-3.5" />
+                  <Mail className="w-5 h-5 text-gray-400 absolute left-4 top-3" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="example@company.com"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition bg-gray-50 hover:bg-white"
+                    className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition bg-gray-50 hover:bg-white"
                     disabled={loading}
                   />
                 </div>
@@ -192,23 +211,23 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
               {/* Password Field */}
               {mode !== 'reset' && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2.5">
+                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">
                     비밀번호 {mode === 'signup' && '(최소 6자)'}
                   </label>
                   <div className="relative">
-                    <Lock className="w-5 h-5 text-gray-400 absolute left-4 top-3.5" />
+                    <Lock className="w-5 h-5 text-gray-400 absolute left-4 top-3" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition bg-gray-50 hover:bg-white"
+                      className="w-full pl-12 pr-12 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition bg-gray-50 hover:bg-white"
                       disabled={loading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 transition"
+                      className="absolute right-4 top-3 text-gray-400 hover:text-gray-600 transition"
                       disabled={loading}
                     >
                       {showPassword ? (
@@ -225,7 +244,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-red-600 text-white font-bold rounded-full hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2 text-lg shadow-lg hover:shadow-xl mt-6"
+                className="w-full py-3 bg-red-600 text-white font-bold rounded-full hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2 text-base shadow-sm hover:shadow-md mt-4"
               >
                 {loading ? (
                   <>
@@ -244,7 +263,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
             </form>
 
             {/* Footer Links */}
-            <div className="flex items-center justify-between text-sm pt-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
               {mode === 'login' && (
                 <>
                   <button
@@ -302,7 +321,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
             </div>
 
             {/* Divider */}
-            <div className="relative py-2">
+            <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
@@ -312,7 +331,12 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
             </div>
 
             {/* Social Login */}
-            <button className="w-full py-3 border-2 border-gray-300 text-gray-900 font-bold rounded-full hover:bg-gray-50 transition flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full py-2.5 border-2 border-gray-300 text-gray-900 font-bold rounded-full hover:bg-gray-50 transition disabled:opacity-50 flex items-center justify-center gap-3 text-sm"
+            >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -321,10 +345,18 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
               </svg>
               Google로 계속하기
             </button>
+            <button
+              type="button"
+              onClick={onGuestAccess}
+              disabled={loading}
+              className="w-full py-2.5 text-gray-600 font-semibold rounded-full hover:bg-gray-50 transition disabled:opacity-50 text-sm"
+            >
+              비회원으로 계속하기
+            </button>
           </div>
 
           {/* Right Side - Illustration & QR Code */}
-          <div className="hidden md:flex flex-col items-center justify-center space-y-8">
+          <div className="hidden">
             
             {/* Decorative Elements */}
             <div className="relative w-80 h-96">

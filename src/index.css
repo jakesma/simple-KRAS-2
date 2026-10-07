@@ -8,9 +8,16 @@
 }
 
 body {
-  background-color: #F8F9FA;
-  color: #343A40;
+  background-color: #FCF8F3;
+  color: #33251D;
 }
+
+/* Construction service palette: map the inherited green utility accents to warm brown. */
+[class~="bg-emerald-600"] { background-color: #8B5E3C; }
+[class~="hover:bg-emerald-700"]:hover { background-color: #6F452A; }
+[class~="text-emerald-600"], [class~="text-emerald-700"] { color: #8B5E3C; }
+[class~="bg-emerald-50"], [class~="bg-emerald-100"] { background-color: #F3E5D7; }
+[class~="border-emerald-200"], [class~="border-emerald-500"] { border-color: #C99A72; }
 
 /* Scrollbar aesthetic matching Clean Utility */
 ::-webkit-scrollbar {

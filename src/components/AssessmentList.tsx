@@ -5,10 +5,11 @@
 
 import { useState } from 'react';
 import { RiskAssessment, WorkflowStatus } from '../types';
-import { Search, Plus, Calendar, ShieldCheck, Copy, Trash2, ArrowRight, Eye, ClipboardList } from 'lucide-react';
+import { Search, Plus, Calendar, ShieldCheck, Copy, Trash2, ArrowRight, ArrowLeft, Eye, ClipboardList } from 'lucide-react';
 
 interface AssessmentListProps {
   assessments: RiskAssessment[];
+  onBackToHome: () => void;
   onCreateNew: () => void;
   onSelect: (id: string) => void;
   onViewDoc: (id: string) => void;
@@ -18,6 +19,7 @@ interface AssessmentListProps {
 
 export default function AssessmentList({
   assessments,
+  onBackToHome,
   onCreateNew,
   onSelect,
   onViewDoc,
@@ -50,13 +52,22 @@ export default function AssessmentList({
         {/* Top Title & Quick Action */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4" id="list-header">
           <div className="flex items-start gap-3">
+            <button
+              type="button"
+              onClick={onBackToHome}
+              className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"
+              title="홈으로 돌아가기"
+              aria-label="홈으로 돌아가기"
+            >
+              <ArrowLeft size={18} />
+            </button>
             <span className="w-2.5 h-8 bg-emerald-500 rounded-sm mt-1 shrink-0"></span>
             <div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                 KRAS 위험성평가 종합 대시보드
               </h1>
               <p className="text-slate-500 text-xs mt-1">
-                제조 현장의 5단계 위험성평가 내역을 작성하고 버전을 관리합니다.
+                건설 현장의 5단계 위험성평가 내역을 작성하고 버전을 관리합니다.
               </p>
             </div>
           </div>
@@ -187,7 +198,7 @@ export default function AssessmentList({
                   
                   <div className="flex items-center gap-4 text-[11px] text-slate-400 flex-wrap">
                     <span>회사: <strong className="text-slate-600 font-medium">{a.companyProfile.companyName}</strong></span>
-                    <span>공정수: <strong className="text-slate-600 font-medium">{a.processes.length}개</strong></span>
+                    <span>작업수: <strong className="text-slate-600 font-medium">{a.processes.length}개</strong></span>
                     <span>도출 요인: <strong className="text-slate-600 font-medium">{totalFactors}건</strong> (허용불가: <span className="text-red-500 font-bold">{unacceptableFactors}건</span>)</span>
                   </div>
                 </div>
