@@ -26,7 +26,8 @@ import {
   savePortOneConfig, 
   isPortOneConfigured,
   KgInicisPayMethod,
-  PaymentSuccessResult 
+  PaymentSuccessResult,
+  PaymentFailureResult 
 } from '../services/portone';
 
 interface PaymentPageProps {
@@ -146,6 +147,7 @@ export default function PaymentPage({
         customData: {
           companyName: companyName.trim() || undefined,
           service: 'SIMPLE-KRAS-CONSTRUCTION',
+          isGuest: !getCurrentUser(),
         }
       });
 
@@ -155,9 +157,10 @@ export default function PaymentPage({
           onSuccess(result);
         }
       } else {
-        setErrorMessage(result.message || '결제가 완료되지 않았습니다.');
+        const failure = result as PaymentFailureResult;
+        setErrorMessage(failure.message || '결제가 완료되지 않았습니다.');
         // 포트원 미연동 상태일 때 모달 유도
-        if (result.code === 'CONFIG_MISSING') {
+        if (failure.code === 'CONFIG_MISSING') {
           setShowConfigModal(true);
         }
       }
@@ -190,6 +193,12 @@ export default function PaymentPage({
               <span className="font-semibold text-slate-900">{completedPayment.orderName}</span>
             </div>
             <div className="flex justify-between pb-2 border-b border-slate-200">
+              <span className="text-slate-500">구매자 구분</span>
+              <span className="font-semibold text-slate-900">
+                {customerName || '고객'} ({getCurrentUser() ? '회원' : '비회원 주문'})
+              </span>
+            </div>
+            <div className="flex justify-between pb-2 border-b border-slate-200">
               <span className="text-slate-500">결제 금액</span>
               <span className="font-bold text-blue-600 text-base">₩{completedPayment.amount.toLocaleString()}</span>
             </div>
@@ -207,15 +216,28 @@ export default function PaymentPage({
             </div>
           </div>
 
+          {!getCurrentUser() && (
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 text-left mb-6 flex items-start gap-2.5">
+              <span className="text-base">🎉</span>
+              <div>
+                <p className="font-bold text-emerald-900">비회원 구매 권한 활성화 완료</p>
+                <p className="mt-0.5 text-emerald-700 leading-relaxed">
+                  회원가입 없이도 위험성평가 플랫폼의 모든 유료 기능을 즉시 사용하실 수 있습니다. 아래 버튼을 눌러 플랫폼으로 바로 이동하세요.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3">
             <button
               onClick={() => {
                 if (onCancel) onCancel();
                 else window.location.href = '/';
               }}
-              className="flex-1 py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition shadow-sm"
+              className="flex-1 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition shadow-md flex items-center justify-center gap-2"
             >
-              대시보드로 돌아가기
+              <ShieldCheck size={18} />
+              {getCurrentUser() ? '대시보드로 돌아가기' : '플랫폼 바로 시작하기'}
             </button>
           </div>
         </div>
@@ -312,10 +334,28 @@ export default function PaymentPage({
 
         {/* Customer Information Form */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-          <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <Building2 size={18} className="text-slate-600" />
-            주문자 / 현장 정보
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Building2 size={18} className="text-slate-600" />
+              주문자 / 현장 정보
+            </h2>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <CheckCircle2 size={13} />
+              {getCurrentUser() ? '회원 연동 결제' : '비회원 간편 구매 지원'}
+            </span>
+          </div>
+
+          {!getCurrentUser() && (
+            <div className="mb-4 p-3.5 bg-blue-50/80 rounded-xl border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
+              <span className="text-base leading-none">💡</span>
+              <div className="flex-1">
+                <p className="font-bold text-blue-950">회원가입 없이 즉시 구매 가능합니다</p>
+                <p className="text-blue-800 mt-0.5 leading-relaxed">
+                  결제 완료 즉시 플랫폼 이용 권한이 부여되며, 결제 영수증과 승인 내역은 아래 입력하시는 휴대폰 번호 및 이메일로 안전하게 발송됩니다.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

@@ -101,7 +101,7 @@ export default function TermsOfService({ isOpen, onClose }: TermsOfServiceProps)
             <div className="space-y-2 ml-4 text-gray-600">
               <p>① FREE 플랜(월 5회): 무료</p>
               <p>② PLUS 플랜(무제한): ₩35,000/월</p>
-              <p>③ PRO 플랜(무제한): ₩250,000/년</p>
+              <p>③ PRO 플랜(무제한): ₩380,000/년</p>
               <p>④ 요금은 선택한 결제 수단으로 자동 청구됩니다.</p>
               <p>⑤ 결제 일시는 선택한 결제 수단에 따라 달라질 수 있습니다.</p>
             </div>

@@ -354,6 +354,10 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
             <p className="text-lg text-gray-600 mt-4">
               무료로 시작하고, 필요할 때 업그레이드하세요. 언제든 취소 가능합니다.
             </p>
+            <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              회원가입 없이 비회원도 간편 결제 및 즉시 이용 가능
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -391,10 +395,10 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
               },
               {
                 name: 'PRO',
-                price: '₩250,000',
+                price: '₩380,000',
                 period: '/년',
                 originalPrice: '₩420,000',
-                subtext: '연 요금 40% 할인',
+                subtext: '연 요금 약 10% 할인',
                 cta: 'PRO 시작하기',
                 highlight: true,
                 features: [
@@ -436,7 +440,7 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
                       } else if (plan.name === 'PLUS' && onPaymentClick) {
                         onPaymentClick('Plus', 35000);
                       } else if (plan.name === 'PRO' && onPaymentClick) {
-                        onPaymentClick('Pro', 250000);
+                        onPaymentClick('Pro', 380000);
                       }
                     }}
                     className={`w-full mt-8 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${

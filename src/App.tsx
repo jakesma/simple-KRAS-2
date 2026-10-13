@@ -14,7 +14,7 @@ import AuthPage from './components/AuthPage';
 import PaymentPage from './components/PaymentPage';
 import CategorySelector from './components/CategorySelector';
 import { ConstructionSubCategory, createConstructionProcess } from './data/constructionCategories';
-import { ShieldCheck, Layers, Info, LogOut } from 'lucide-react';
+import { ShieldCheck, Layers, Info, LogOut, Zap } from 'lucide-react';
 import { onAuthStateChanged, getCurrentUser, logOut, AuthUser } from './config/auth';
 import { getUserAssessments, saveAssessment, deleteAssessment, migrateLocalStorageToFirestore } from './config/firestore';
 
@@ -486,6 +486,37 @@ export default function App() {
     );
   }
 
+  // Show Payment Page if payment flow is initiated (supports both members and non-members)
+  if (showPayment) {
+    return (
+      <PaymentPage
+        amount={paymentAmount}
+        description={`SIMPLE KRAS ${paymentPlan} 플랜 구독료`}
+        onSuccess={(result) => {
+          console.log('결제 완료:', paymentPlan, paymentAmount, result);
+          // 비회원 결제 시 비회원 모드 자동 활성화하여 즉시 플랫폼 이용 가능하게 설정
+          if (!authUser) {
+            localStorage.setItem('kras_construction_guest_mode', 'true');
+            setIsGuestMode(true);
+          }
+          localStorage.setItem('kras_subscription_plan', paymentPlan);
+          localStorage.setItem('kras_subscription_paid_at', new Date().toISOString());
+          localStorage.setItem('kras_subscription_order_id', result.paymentId);
+          if (result.orderName) {
+            localStorage.setItem('kras_subscription_order_name', result.orderName);
+          }
+        }}
+        onCancel={() => {
+          setShowPayment(false);
+          // 비회원이거나 아직 대시보드 진입 전인 경우 랜딩페이지로 복귀
+          if (!authUser && !isGuestMode) {
+            setShowLanding(true);
+          }
+        }}
+      />
+    );
+  }
+
   // Require authentication before opening the assessment dashboard.
   if (!authUser && !isGuestMode) {
     return (
@@ -547,6 +578,22 @@ export default function App() {
             {/* PRD tab removed per user request */}
           </div>
 
+          {/* Plan Upgrade / Purchase Button */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setPaymentPlan('Pro');
+                setPaymentAmount(380000);
+                setShowPayment(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-sm transition"
+              title="PRO 플랜 구매 (비회원/회원 모두 결제 가능)"
+            >
+              <Zap size={14} className="fill-current text-amber-300" />
+              <span>PRO 플랜 구매</span>
+            </button>
+          </div>
+
           {/* User Meta */}
           <div className="hidden sm:flex items-center gap-3 text-xs border-l border-[#34495E] pl-4" id="header-user-badge">
             <div className="text-right">
@@ -570,17 +617,7 @@ export default function App() {
 
       {/* Main Body Content Switcher */}
       <main className="flex-1" id="app-main-content">
-        {showPayment ? (
-          <PaymentPage
-            amount={paymentAmount}
-            description={`SIMPLE KRAS ${paymentPlan} 플랜 월간 구독료`}
-            onSuccess={() => {
-              // 결제 성공 후 처리 로직 (상태 업데이트 등)
-              console.log('결제 완료:', paymentPlan, paymentAmount);
-            }}
-            onCancel={() => setShowPayment(false)}
-          />
-        ) : activeViewing ? (
+        {activeViewing ? (
           <DocumentViewer
             assessment={activeViewing}
             onBack={() => setViewingAssessmentId(null)}

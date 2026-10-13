@@ -58,7 +58,7 @@ export default function RefundPolicy({ isOpen, onClose }: RefundPolicyProps) {
               </div>
 
               <div>
-                <p className="font-semibold mb-1">1.3 환불 정책 - 연간 플랜 (PRO: ₩250,000/년)</p>
+                <p className="font-semibold mb-1">1.3 환불 정책 - 연간 플랜 (PRO: ₩380,000/년)</p>
                 <ul className="list-disc list-inside space-y-1 text-gray-600">
                   <li><span className="font-semibold">구독 후 30일 이내:</span> 100% 전액 환불</li>
                   <li><span className="font-semibold">구독 후 31~90일:</span> 70% 환불</li>
