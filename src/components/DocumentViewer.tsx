@@ -4,21 +4,139 @@
  */
 
 import { useState } from 'react';
-import { RiskAssessment, HazardItem } from '../types';
-import { FileText, Printer, ArrowLeft, Download, ShieldAlert, CheckCircle2, Copy, Check, Pencil, ClipboardCheck } from 'lucide-react';
+import { RiskAssessment, HazardItem, AssessmentPhotoSheet, AssessmentPhotoItem } from '../types';
+import { 
+  FileText, Printer, ArrowLeft, Download, ShieldAlert, 
+  CheckCircle2, Copy, Check, Pencil, ClipboardCheck, 
+  Camera, Image as ImageIcon, Upload, Trash2, Plus, RefreshCw 
+} from 'lucide-react';
 
 interface DocumentViewerProps {
   assessment: RiskAssessment;
   onBack: () => void;
   onCreateTbm: () => void;
   onEdit: () => void;
+  onUpdateAssessment?: (updated: RiskAssessment) => void;
 }
 
 type DocumentTab = 'survey' | 'hazard' | 'estimation' | 'reduction' | 'kras';
 
-export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit }: DocumentViewerProps) {
+export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit, onUpdateAssessment }: DocumentViewerProps) {
   const [activeTab, setActiveTab] = useState<DocumentTab>('kras');
   const [copied, setCopied] = useState(false);
+
+  // Photo Sheet State (Applied only to standard KRAS evaluation sheet)
+  const [photoSheet, setPhotoSheet] = useState<AssessmentPhotoSheet>(() => {
+    return assessment.photoSheet || {
+      title: '현장 유해·위험요인 및 개선 조치 사진대지',
+      inspector: assessment.companyProfile.siteManager || '안전관리자',
+      inspectionDate: assessment.createdAt || new Date().toISOString().split('T')[0],
+      photo1: {
+        title: '개선 전 (위험요인 발견)',
+        location: assessment.processes[0]?.processName || '현장 주요 공종 구역',
+        description: '작업 전 유해·위험요인 발생 상태 및 불안전한 행동·상태 현장 사진',
+        imageUrl: ''
+      },
+      photo2: {
+        title: '개선 후 (안전조치 완료)',
+        location: assessment.processes[0]?.processName || '현장 주요 공종 구역',
+        description: '위험성 감소대책 이행 완료 및 안전시설물·보호구 착용 조치 결과 사진',
+        imageUrl: ''
+      }
+    };
+  });
+
+  const handleUpdatePhotoSheet = (updatedSheet: AssessmentPhotoSheet) => {
+    setPhotoSheet(updatedSheet);
+    if (onUpdateAssessment) {
+      onUpdateAssessment({
+        ...assessment,
+        photoSheet: updatedSheet
+      });
+    }
+  };
+
+  const handleImageUpload = (slot: 'photo1' | 'photo2', file: File) => {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        // High quality client compression to ~100KB so it prints crisply and saves reliably
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+          const currentSlot = photoSheet[slot] || {
+            title: slot === 'photo1' ? '개선 전 (위험요인 발견)' : '개선 후 (안전조치 완료)',
+            location: '주요 작업 구역',
+            description: '',
+            imageUrl: ''
+          };
+
+          const updated: AssessmentPhotoSheet = {
+            ...photoSheet,
+            [slot]: {
+              ...currentSlot,
+              imageUrl: dataUrl
+            }
+          };
+          handleUpdatePhotoSheet(updated);
+        }
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = (slot: 'photo1' | 'photo2') => {
+    const currentSlot = photoSheet[slot];
+    if (!currentSlot) return;
+    const updated: AssessmentPhotoSheet = {
+      ...photoSheet,
+      [slot]: {
+        ...currentSlot,
+        imageUrl: ''
+      }
+    };
+    handleUpdatePhotoSheet(updated);
+  };
+
+  const handleFieldChange = (slot: 'photo1' | 'photo2', field: keyof AssessmentPhotoItem, val: string) => {
+    const currentSlot = photoSheet[slot] || {
+      title: slot === 'photo1' ? '개선 전 (위험요인 발견)' : '개선 후 (안전조치 완료)',
+      location: '',
+      description: '',
+      imageUrl: ''
+    };
+    const updated: AssessmentPhotoSheet = {
+      ...photoSheet,
+      [slot]: {
+        ...currentSlot,
+        [field]: val
+      }
+    };
+    handleUpdatePhotoSheet(updated);
+  };
 
   const totalHazards = assessment.processes.reduce((acc, p) => acc + p.hazards.length, 0);
   const unacceptableHazards = assessment.processes.reduce(
@@ -56,6 +174,16 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
           });
         }
       });
+
+      if (photoSheet.photo1?.imageUrl || photoSheet.photo2?.imageUrl) {
+        markdown += `\n\n## 현장 위험요인 및 개선 조치 사진대지\n`;
+        if (photoSheet.photo1?.imageUrl) {
+          markdown += `* **[사진 1] ${photoSheet.photo1.title}**: ${photoSheet.photo1.description} (위치: ${photoSheet.photo1.location})\n`;
+        }
+        if (photoSheet.photo2?.imageUrl) {
+          markdown += `* **[사진 2] ${photoSheet.photo2.title}**: ${photoSheet.photo2.description} (위치: ${photoSheet.photo2.location})\n`;
+        }
+      }
     } else if (activeTab === 'survey') {
       markdown += `## 안전보건정보 사전조사서\n\n`;
       markdown += `| 공정명 | 작업내용 | 사용 기계·설비 | 취급 화학물질 | 투입 근로자 | 관리감독자 |\n`;
@@ -576,6 +704,289 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* ============================================================== */}
+              {/* 6. PHOTO EVIDENCE SHEET (사진대지 - 표준위험평가표 전용)        */}
+              {/* ============================================================== */}
+              <div 
+                className="pt-8 print:break-before-page border-t-2 border-slate-200 print:border-none mt-8" 
+                id="photo-sheet-section"
+                style={{ breakBefore: 'page', pageBreakBefore: 'always' }}
+              >
+                {/* Section Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b-2 border-slate-900 pb-2 gap-2">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                      <Camera size={18} className="text-slate-900" />
+                      위험성평가 현장 확인 및 개선 조치 사진대지 (2매 첨부)
+                    </h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5 print:hidden">
+                      ※ 표준위험평가표의 개선 전·후 실사 사진 2장을 등록합니다. (인쇄 및 PDF 출력 시 별도의 사진대지 페이지로 출력됩니다.)
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 print:hidden self-start sm:self-auto">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      ★ 표준위험평가표 전용 부속서
+                    </span>
+                  </div>
+                </div>
+
+                {/* Photo Sheet Info Table (Official Korean Standard Header) */}
+                <table className="w-full border-collapse border border-slate-900 text-xs mb-5" id="photo-sheet-info-table">
+                  <tbody>
+                    <tr className="border-b border-slate-900">
+                      <th className="bg-slate-100 p-2 border-r border-slate-900 w-24 text-center font-bold">사업장명</th>
+                      <td className="p-2 border-r border-slate-900 w-1/3 font-semibold">{assessment.companyProfile.companyName || '사업장 미지정'}</td>
+                      <th className="bg-slate-100 p-2 border-r border-slate-900 w-24 text-center font-bold">평가 공종명</th>
+                      <td className="p-2 font-semibold">{assessment.title}</td>
+                    </tr>
+                    <tr>
+                      <th className="bg-slate-100 p-2 border-r border-slate-900 text-center font-bold">점검/촬영일</th>
+                      <td className="p-2 border-r border-slate-900">
+                        <input
+                          type="date"
+                          value={photoSheet.inspectionDate || assessment.createdAt}
+                          onChange={(e) => handleUpdatePhotoSheet({ ...photoSheet, inspectionDate: e.target.value })}
+                          className="w-full bg-transparent p-0 text-xs border-0 focus:ring-1 focus:ring-slate-900 rounded print:border-none font-mono"
+                        />
+                      </td>
+                      <th className="bg-slate-100 p-2 border-r border-slate-900 text-center font-bold">점검·확인자</th>
+                      <td className="p-2">
+                        <input
+                          type="text"
+                          value={photoSheet.inspector || assessment.companyProfile.siteManager || '안전보건관리자'}
+                          onChange={(e) => handleUpdatePhotoSheet({ ...photoSheet, inspector: e.target.value })}
+                          placeholder="점검자 성명 입력"
+                          className="w-full bg-transparent p-0 text-xs border-0 focus:ring-1 focus:ring-slate-900 rounded print:border-none font-semibold text-slate-800"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* 2 Photo Cards Grid (Photo 1: 개선 전, Photo 2: 개선 후) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5" id="photo-cards-grid">
+                  
+                  {/* ========================================= */}
+                  {/* PHOTO 1: 개선 전 (위험요인 발견 / 조치 전) */}
+                  {/* ========================================= */}
+                  <div className="border border-slate-900 rounded-lg p-3 bg-white space-y-3 flex flex-col justify-between">
+                    <div>
+                      {/* Photo 1 Header */}
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                          <ShieldAlert size={13} />
+                          [사진 1] 개선 전 (위험요인 발견)
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">STEP 1</span>
+                      </div>
+
+                      {/* Photo 1 Image Display or Upload Area */}
+                      <div className="relative">
+                        <input 
+                          type="file" 
+                          id="photo-file-input-1" 
+                          accept="image/*" 
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleImageUpload('photo1', e.target.files[0]);
+                              e.target.value = '';
+                            }
+                          }} 
+                          className="hidden" 
+                        />
+
+                        {photoSheet.photo1?.imageUrl ? (
+                          <div className="relative group rounded-lg overflow-hidden border border-slate-900 bg-slate-900/5 aspect-[4/3] flex items-center justify-center">
+                            <img 
+                              src={photoSheet.photo1.imageUrl} 
+                              alt="개선 전 현장 사진" 
+                              className="w-full h-full object-contain"
+                            />
+                            {/* Action overlay on screen (hidden on print) */}
+                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 print:hidden">
+                              <button
+                                type="button"
+                                onClick={() => document.getElementById('photo-file-input-1')?.click()}
+                                className="bg-white text-slate-800 px-3 py-1.5 rounded-md text-xs font-bold shadow-md hover:bg-slate-100 transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Upload size={13} /> 사진 교체
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePhoto('photo1')}
+                                className="bg-rose-600 text-white px-3 py-1.5 rounded-md text-xs font-bold shadow-md hover:bg-rose-700 transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 size={13} /> 삭제
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Screen Interactive Upload Dropzone */}
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById('photo-file-input-1')?.click()}
+                              className="w-full aspect-[4/3] border-2 border-dashed border-rose-300 hover:border-rose-500 rounded-lg bg-rose-50/30 hover:bg-rose-50/60 transition flex flex-col items-center justify-center p-4 text-center cursor-pointer group print:hidden"
+                            >
+                              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                                <Camera size={22} />
+                              </div>
+                              <span className="text-xs font-bold text-rose-900">클릭하여 [개선 전] 현장 사진 첨부</span>
+                              <span className="text-[10px] text-slate-400 mt-1">스마트폰 촬영 사진, JPG, PNG 파일 지원</span>
+                            </button>
+
+                            {/* Print Fallback Frame (displayed when printing empty) */}
+                            <div className="hidden print:flex aspect-[4/3] border-2 border-dashed border-slate-400 rounded items-center justify-center text-slate-400 text-xs font-bold">
+                              [ 개선 전 현장 사진 부착 위치 ]
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Photo 1 Meta: Location */}
+                      <div className="mt-3">
+                        <label className="block text-[10px] font-bold text-slate-500 mb-0.5">작업 위치 / 세부 공종명</label>
+                        <input
+                          type="text"
+                          value={photoSheet.photo1?.location || ''}
+                          onChange={(e) => handleFieldChange('photo1', 'location', e.target.value)}
+                          placeholder="예: 2층 전기실 케이블 트레이 고소 설치 구역"
+                          className="w-full bg-slate-50 border border-slate-200 rounded p-1.5 text-xs focus:ring-1 focus:ring-slate-900 print:bg-transparent print:border-b print:border-slate-300 font-medium"
+                        />
+                      </div>
+
+                      {/* Photo 1 Meta: Hazard Description */}
+                      <div className="mt-2">
+                        <label className="block text-[10px] font-bold text-slate-500 mb-0.5">유해위험요인 파악 내용 (조치 전 상황)</label>
+                        <textarea
+                          rows={3}
+                          value={photoSheet.photo1?.description || ''}
+                          onChange={(e) => handleFieldChange('photo1', 'description', e.target.value)}
+                          placeholder="원인 행위 및 유해위험 발생 상태를 구체적으로 기재 (예: 고소작업대 탑승 시 안전대 미체결 및 안전난간 밖으로 몸을 과도하게 내밀어 추락 위험 발견)"
+                          className="w-full bg-slate-50 border border-slate-200 rounded p-1.5 text-xs focus:ring-1 focus:ring-slate-900 print:bg-transparent print:border-none leading-relaxed text-slate-800"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ========================================= */}
+                  {/* PHOTO 2: 개선 후 (안전조치 완료 / 조치 후) */}
+                  {/* ========================================= */}
+                  <div className="border border-slate-900 rounded-lg p-3 bg-white space-y-3 flex flex-col justify-between">
+                    <div>
+                      {/* Photo 2 Header */}
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <CheckCircle2 size={13} />
+                          [사진 2] 개선 후 (안전조치 이행 완료)
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">STEP 2</span>
+                      </div>
+
+                      {/* Photo 2 Image Display or Upload Area */}
+                      <div className="relative">
+                        <input 
+                          type="file" 
+                          id="photo-file-input-2" 
+                          accept="image/*" 
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleImageUpload('photo2', e.target.files[0]);
+                              e.target.value = '';
+                            }
+                          }} 
+                          className="hidden" 
+                        />
+
+                        {photoSheet.photo2?.imageUrl ? (
+                          <div className="relative group rounded-lg overflow-hidden border border-slate-900 bg-slate-900/5 aspect-[4/3] flex items-center justify-center">
+                            <img 
+                              src={photoSheet.photo2.imageUrl} 
+                              alt="개선 후 현장 사진" 
+                              className="w-full h-full object-contain"
+                            />
+                            {/* Action overlay on screen (hidden on print) */}
+                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 print:hidden">
+                              <button
+                                type="button"
+                                onClick={() => document.getElementById('photo-file-input-2')?.click()}
+                                className="bg-white text-slate-800 px-3 py-1.5 rounded-md text-xs font-bold shadow-md hover:bg-slate-100 transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Upload size={13} /> 사진 교체
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePhoto('photo2')}
+                                className="bg-rose-600 text-white px-3 py-1.5 rounded-md text-xs font-bold shadow-md hover:bg-rose-700 transition flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 size={13} /> 삭제
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Screen Interactive Upload Dropzone */}
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById('photo-file-input-2')?.click()}
+                              className="w-full aspect-[4/3] border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-lg bg-emerald-50/30 hover:bg-emerald-50/60 transition flex flex-col items-center justify-center p-4 text-center cursor-pointer group print:hidden"
+                            >
+                              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                                <Camera size={22} />
+                              </div>
+                              <span className="text-xs font-bold text-emerald-900">클릭하여 [개선 후] 현장 사진 첨부</span>
+                              <span className="text-[10px] text-slate-400 mt-1">위험감소대책 이행 및 안전조치 완료 사진</span>
+                            </button>
+
+                            {/* Print Fallback Frame (displayed when printing empty) */}
+                            <div className="hidden print:flex aspect-[4/3] border-2 border-dashed border-slate-400 rounded items-center justify-center text-slate-400 text-xs font-bold">
+                              [ 개선 후 현장 사진 부착 위치 ]
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Photo 2 Meta: Location */}
+                      <div className="mt-3">
+                        <label className="block text-[10px] font-bold text-slate-500 mb-0.5">조치 위치 / 세부 공종명</label>
+                        <input
+                          type="text"
+                          value={photoSheet.photo2?.location || ''}
+                          onChange={(e) => handleFieldChange('photo2', 'location', e.target.value)}
+                          placeholder="예: 2층 전기실 케이블 트레이 고소 설치 구역"
+                          className="w-full bg-slate-50 border border-slate-200 rounded p-1.5 text-xs focus:ring-1 focus:ring-slate-900 print:bg-transparent print:border-b print:border-slate-300 font-medium"
+                        />
+                      </div>
+
+                      {/* Photo 2 Meta: Reduction Measure Result */}
+                      <div className="mt-2">
+                        <label className="block text-[10px] font-bold text-slate-500 mb-0.5">위험성 감소대책 조치 결과 (조치 후 상태)</label>
+                        <textarea
+                          rows={3}
+                          value={photoSheet.photo2?.description || ''}
+                          onChange={(e) => handleFieldChange('photo2', 'description', e.target.value)}
+                          placeholder="이행 완료된 안전보건 조치 사항을 구체적으로 기재 (예: 고소작업대 안전대 부착설비에 안전고리 100% 체결 확인, 전담 유도원 하부 배치 및 안전난간 내 작업 준수)"
+                          className="w-full bg-slate-50 border border-slate-200 rounded p-1.5 text-xs focus:ring-1 focus:ring-slate-900 print:bg-transparent print:border-none leading-relaxed text-slate-800"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Photo Sheet Footer Confirmation & Stamp Box */}
+                <div className="mt-5 border border-slate-900 p-3 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                  <div className="text-slate-600 leading-relaxed text-[11px]">
+                    <span className="font-bold text-slate-900">확인 증빙:</span> 본 사진대지는 위 위험성평가표에 명시된 유해위험요인의 실제 현장 확인 및 위험성 감소대책 이행 결과를 증명합니다.
+                  </div>
+                  <div className="flex items-center gap-6 font-semibold shrink-0">
+                    <span>점검자: <u className="font-bold text-slate-900">&nbsp;&nbsp;{photoSheet.inspector || '안전관리자'}&nbsp;&nbsp;</u> (서명)</span>
+                    <span>현장총괄: <u className="text-slate-300">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> (인)</span>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}

@@ -98,82 +98,224 @@ export const CONSTRUCTION_CATEGORIES: ConstructionCategory[] = [
   {
     id: 'electrical-work',
     name: '전기공사',
-    description: '자료의 전기·통신·방재 설비 공사 분류에 따른 현장 작업',
+    description: '전기공사의 전체 공정 흐름(자재 반입 및 소운반부터 고소·장비작업, 배선, 기기안착, 통전시험 및 활선 유지보수)을 포괄하는 작업 분류',
     subCategories: [
-      { id: 'power-equipment', name: '전기·전력 설비 공사', description: '수배전반, 전력케이블, 조명과 전기기구를 설치하는 작업', equipment: ['절연 공구', '활선 경보기', '이동식 사다리'], materials: ['전력케이블', '분전반', '조명기구'] },
-      { id: 'substation', name: '수변전 설비 공사', description: '차단기, 변성기, 변압기, 배전반, 발전기 및 UPS를 반입·설치·결선하는 작업', equipment: ['절연 공구', '체인블록', '절연저항계'], materials: ['차단기', '변압기', '배전반'] },
-      { id: 'mechanical-room-power', name: '기계실 동력 설비 공사', description: 'MCC, 모터, 펌프, 팬과 밸브의 동력 배선·제어설비를 설치하는 작업', equipment: ['절연 공구', '케이블 포설기', '절연저항계'], materials: ['MCC', '동력케이블', '제어반'] },
-      { id: 'power-feeder', name: '전력 간선 설비 공사', description: '분전반, 케이블 트레이, 버스덕트, 케이블 및 레이스웨이를 설치하는 작업', equipment: ['케이블 포설기', '고소작업대', '절연 공구'], materials: ['케이블 트레이', '버스덕트', '전력케이블'] },
-      { id: 'conduit-wiring', name: '전기 배관·배선 공사', description: '슬래브·벽체·노출 배관, 박스 및 전선을 설치·입선하는 작업', equipment: ['전기드릴', '케이블 포설기', '절연저항계'], materials: ['전선관', '풀박스', '전선'] },
-      { id: 'power-duct-incoming', name: '전력 관로·인입 공사', description: '지중 전력관로, 맨홀·핸드홀 및 건물 인입 케이블을 설치하는 작업', equipment: ['굴착기', '케이블 윈치', '케이블 포설기'], materials: ['지중 전선관', '전력맨홀', '특고압 케이블'] },
-      { id: 'electrical-room', name: '전기실·변전실 공사', description: '전기실의 찬넬, 트레이, 접지 및 수배전설비 기반을 설치하는 작업', equipment: ['체인블록', '전기드릴', '절연저항계'], materials: ['찬넬', '케이블 트레이', '접지선'] },
-      { id: 'emergency-generator', name: '비상발전기·예비전원 설비 공사', description: '디젤발전기, 자동절체기, 운전반 및 방진·배기설비를 설치·연동하는 작업', equipment: ['이동식 크레인', '체인블록', '절연저항계'], materials: ['디젤발전기', '자동절체기', '전력케이블'] },
-      { id: 'lighting', name: '전등 설비 공사', description: '실내·옥외·터널·공장 조명기구와 배선을 설치하는 작업', equipment: ['고소작업대', '절연 공구', '조도계'], materials: ['조명기구', '전선', '전선관'] },
-      { id: 'outdoor-road-lighting', name: '옥외·도로·교통신호 조명 공사', description: '단지·도로·터널 조명, 보안등 및 교통신호기 설비를 설치하는 작업', equipment: ['고소작업대', '굴착기', '절연저항계'], materials: ['가로등주', '교통신호기', '지중케이블'] },
-      { id: 'aviation-obstruction-light', name: '항공장애표시등 설비 공사', description: '건축물 상부의 항공장애표시등과 제어반·배선을 설치하는 작업', equipment: ['고소작업대', '절연 공구', '테스터기'], materials: ['항공장애등', '제어반', '전선관'] },
-      { id: 'electric-heating', name: '전열 설비 공사', description: '전기 냉난방기기와 전열기기의 전원·제어 배선을 설치하는 작업', equipment: ['절연 공구', '절연저항계', '이동식 사다리'], materials: ['전력케이블', '콘센트', '차단기'] },
-      { id: 'grounding', name: '접지 설비 공사', description: '전력용·통신용·피뢰설비용 접지극과 접지선을 설치·측정하는 작업', equipment: ['접지저항계', '굴착 공구', '압착 공구'], materials: ['접지선', '접지봉', '접지판'] },
-      { id: 'lightning-protection', name: '피뢰 설비 공사', description: '낙뢰 보호용 수뢰부, 인하도선 및 접지설비를 설치하는 작업', equipment: ['고소작업대', '절연 공구', '접지저항계'], materials: ['피뢰침', '인하도선', '접지선'] },
-      { id: 'solar-power', name: '태양광 발전 설비 공사', description: '태양광 모듈, 인버터, 구조물과 전력계통 연계 설비를 설치하는 작업', equipment: ['고소작업대', '절연 공구', '토크렌치'], materials: ['태양광 모듈', '인버터', '전력케이블'] },
-      { id: 'wind-power', name: '풍력 발전 설비 공사', description: '풍력발전 타워, 발전기, 계통연계반 및 모니터링 설비를 설치하는 작업', equipment: ['이동식 크레인', '고소작업대', '절연 공구'], materials: ['풍력발전기', '타워', '계통연계반'] },
-      { id: 'electric-floor-heating', name: '전기온돌·전열보드 공사', description: '발열선, 전열보드, 온도센서 및 자동온도조절기를 설치하는 작업', equipment: ['절연 공구', '절연저항계', '테스터기'], materials: ['발열선', '전열보드', '온도조절기'] },
-      { id: 'electric-vehicle-charging', name: '전기자동차 충전 설비 공사', description: '완속·급속 충전기, 분전반, 전원 배선과 운영서버를 설치·시험하는 작업', equipment: ['절연 공구', '절연저항계', '테스터기'], materials: ['충전기', '분전반', '전력케이블'] },
-      { id: 'telephone', name: '전화 설비 공사', description: '유선·무선·인터넷 전화용 배선과 단말기를 설치하는 작업', equipment: ['케이블 포설기', '압착 공구', '테스터기'], materials: ['전화케이블', '단자함', '모듈'] },
-      { id: 'data-network', name: '정보통신·데이터 통신 공사', description: '데이터 통신망, 인터넷, 허브 및 서버실 배선 설비를 설치하는 작업', equipment: ['케이블 포설기', '랜 테스터기', '압착 공구'], materials: ['LAN 케이블', '광케이블', '허브'] },
-      { id: 'tv-system', name: 'TV 설비 공사', description: '공중파·위성·DMB 수신 설비와 동축케이블을 설치하는 작업', equipment: ['케이블 포설기', '신호측정기', '이동식 사다리'], materials: ['동축케이블', '안테나', '분배기'] },
-      { id: 'cctv', name: 'CCTV 설비 공사', description: 'CCTV 카메라, 녹화장치 및 감시용 네트워크 배선을 설치하는 작업', equipment: ['고소작업대', '전동드릴', '랜 테스터기'], materials: ['CCTV 카메라', 'LAN 케이블', '녹화장치'] },
-      { id: 'home-network', name: '홈네트워크 설비 공사', description: '스마트홈 월패드, 홈네트워크 장비 및 세대 통신배선을 설치하는 작업', equipment: ['절연 공구', '랜 테스터기', '압착 공구'], materials: ['월패드', '통신케이블', '스위치'] },
-      { id: 'parking-control', name: '주차관제 설비 공사', description: '주차 게이트, 차량 인식기와 요금정산 시스템을 설치하는 작업', equipment: ['전동드릴', '절연 공구', '케이블 포설기'], materials: ['차단기', '차량인식기', '통신케이블'] },
-      { id: 'access-control', name: '출입통제 설비 공사', description: '출입 게이트, 카드·지문 인식기와 제어 배선을 설치하는 작업', equipment: ['전동드릴', '절연 공구', '테스터기'], materials: ['출입통제기', '전기정', '통신케이블'] },
-      { id: 'emergency-bell', name: '비상벨 설비 공사', description: '비상벨, 경광등, 사이렌 및 연동 제어설비를 설치하는 작업', equipment: ['절연 공구', '테스터기', '이동식 사다리'], materials: ['비상벨', '경광등', '사이렌'] },
-      { id: 'mobile-repeater', name: '이동통신 중계 설비 공사', description: '지하·건물 내 이동통신 중계기, 안테나 및 광케이블을 설치하는 작업', equipment: ['고소작업대', '광케이블 융착기', '케이블 포설기'], materials: ['중계기', '안테나', '광케이블'] },
-      { id: 'remote-metering', name: '원격자동검침 설비 공사', description: '전자식 전력량계, 세대전송장치, 중계기 및 원격검침 서버를 설치하는 작업', equipment: ['절연 공구', '랜 테스터기', '테스터기'], materials: ['전력량계', '중계기', '통신케이블'] },
-      { id: 'electric-clock', name: '전기시계 설비 공사', description: '모시계, 자시계 및 전원장치를 설치하고 시간 동기화 시험을 하는 작업', equipment: ['절연 공구', '테스터기', '이동식 사다리'], materials: ['모시계', '자시계', '전선'] },
-      { id: 'snow-melting', name: '제설 설비 공사', description: '진입로·보행로의 히팅케이블, 감지센서와 제어반을 설치하는 작업', equipment: ['절연 공구', '절연저항계', '테스터기'], materials: ['히팅케이블', '온도센서', '제어반'] },
-      { id: 'fire-detection', name: '자동화재탐지 설비 공사', description: '차동식·정온식·연기식 감지기, 수신반과 중계반을 설치하는 작업', equipment: ['절연 공구', '테스터기', '이동식 사다리'], materials: ['감지기', '수신반', '중계반'] },
-      { id: 'evacuation-lighting', name: '피난유도등 설비 공사', description: '유도등과 유도표지를 설치하고 비상전원 회로를 결선하는 작업', equipment: ['고소작업대', '절연 공구', '테스터기'], materials: ['유도등', '유도표지', '전선'] },
-      { id: 'fire-alarm', name: '화재경보·비상방송 설비 공사', description: '사이렌, 경종, 앰프, 스피커와 비상방송 중계설비를 설치하는 작업', equipment: ['고소작업대', '절연 공구', '음향측정기'], materials: ['사이렌', '경종', '스피커'] },
-      { id: 'fire-emergency-power', name: '소방용 비상전원 설비 공사', description: '비상콘센트와 소방용 비상전원 회로를 설치·시험하는 작업', equipment: ['절연 공구', '절연저항계', '테스터기'], materials: ['비상콘센트', '내화케이블', '차단기'] },
-      { id: 'fire-radio', name: '무선통신보조 설비 공사', description: '소방활동용 무선통신 보조설비와 누설동축케이블을 설치하는 작업', equipment: ['고소작업대', '케이블 포설기', '신호측정기'], materials: ['누설동축케이블', '안테나', '중계기'] },
-      { id: 'communication-signal-disaster', name: '통신·신호·방재 설비 공사', description: '통신, 신호, 방송 및 방재 설비의 배선·기기를 설치하는 작업', equipment: ['절연 공구', '케이블 포설기', '이동식 사다리'], materials: ['통신케이블', '감지기', '수신기'] }
+      {
+        id: 'electrical-material-handling',
+        name: '전기 자재 반입 및 야적·소운반 (통전 전)',
+        description: '카고크레인·지게차를 이용한 전선 드럼, 배전반 외함, 케이블 트레이, 전선관 하차, 야적 및 구역별 소운반 (통전 전 무전압)',
+        equipment: ['카고크레인', '지게차', '핸드카트(대차)', '섬유벨트/샤클', '케이블 드럼 롤러'],
+        materials: ['케이블 드럼', '배전반 외함', '케이블 트레이', '전선관']
+      },
+      {
+        id: 'electrical-conduit-tray',
+        name: '배관 및 케이블 트레이·레이스웨이 고소 설치 (통전 전 - 고소작업)',
+        description: '천장·벽체 앵커 드릴 천공, 트레이 및 전선관 고소 조립, 찬넬 행거 설치 (통전 전 무전압 고소작업)',
+        equipment: ['고소작업대(시저형 렌탈)', '이동식비계(BT비계)', 'A형 사다리(말비계)', '해머드릴(타공기)', '고속절단기'],
+        materials: ['케이블 트레이', '전선관', '찬넬', '전산볼트', '앵커']
+      },
+      {
+        id: 'electrical-cable-pulling',
+        name: '케이블 풀링 및 배선 입선 공사 (통전 전 - 장비작업)',
+        description: '트레이 및 배관 내부로 간선 전력케이블 및 제어선 견인·포설 작업 (전동 윈치 견인, 통전 전 무전압)',
+        equipment: ['전동 케이블 윈치(풀러)', '케이블 드럼 롤러', '풀링 로프', '윤활유(풀링젤)'],
+        materials: ['전력케이블', '제어케이블', '인입선']
+      },
+      {
+        id: 'electrical-equipment-setting',
+        name: '수배전반 및 중량 기기 반입·안착 (통전 전 - 중장비작업)',
+        description: '전기실 내 변압기, 수배전반 큐비클, MCC반 양중 및 기초패드 안착, 단말 처리 (통전 전 무전압)',
+        equipment: ['체인블록/도비 롤러', '카고크레인', '유압 단자압착기', '충전 임팩드릴'],
+        materials: ['수배전반 큐비클', '변압기', 'MCC반', '압착터미널']
+      },
+      {
+        id: 'electrical-lighting-device',
+        name: '전등·전열 기구 취급 및 취부공사 (통전 전 - 고소작업)',
+        description: '실내 천장 조명기구, 배선기구, 콘센트, 스위치 설치 및 결선 준비 (통전 전 무전압 상태)',
+        equipment: ['A형 사다리(말비계)', '충전 임팩드릴', '와이어 스트리퍼'],
+        materials: ['LED 조명기구', '콘센트', '스위치', '전등 배선']
+      },
+      {
+        id: 'electrical-energization-test',
+        name: '수전 및 절연측정·통전 시험 (★통전 수반 - 감전·아크 위험)',
+        description: '특고압(22.9kV) 수전 가압, 변압기 여자 시험, 메인 차단기 투입, 상회전 확인, 절연/접지저항 측정, 시운전 (통전 상태)',
+        equipment: ['특고압/저압 검전기', '절연저항계(메거)', '접지저항계', '특고압 절연장구(장갑/화/면)'],
+        materials: ['차단기', '접지선', '단락접지기', '위험 표지판']
+      },
+      {
+        id: 'electrical-live-maintenance',
+        name: '활선 근접 점검 및 정전·LOTO 유지보수 (★통전 수반)',
+        description: '통전 상태 분전반 점검, 정전 작업 시 잠금장치(LOTO) 체결, 검전 및 방전, 불시 가압 방지',
+        equipment: ['LOTO(잠금장치·표지)', '활선 경보기', '1000V 공인 절연공구', '저압 절연장갑'],
+        materials: ['안전 자물쇠', '조작금지 표지', '절연 시트']
+      },
+      { id: 'power-equipment', name: '전기·전력 설비 공사 (종합 공정)', description: '자재반입부터 고소 트레이 설치, 케이블 풀링, 배전반 안착, 통전시험까지의 종합 전기공사', equipment: ['고소작업대(시저형 렌탈)', '카고크레인', '전동 케이블 윈치(풀러)', '절연저항계(메거)', '특고압/저압 검전기'], materials: ['전력케이블', '분전반', '조명기구', '케이블 트레이'] },
+      { id: 'substation', name: '수변전 설비 공사', description: '차단기, 변성기, 변압기, 배전반, 발전기 및 UPS를 반입·설치·결선 및 수전하는 작업', equipment: ['체인블록/도비 롤러', '특고압/저압 검전기', '절연저항계(메거)'], materials: ['차단기', '변압기', '배전반'] },
+      { id: 'mechanical-room-power', name: '기계실 동력 설비 공사', description: 'MCC, 모터, 펌프, 팬과 밸브의 동력 배선·제어설비를 설치하는 작업', equipment: ['전동 케이블 윈치(풀러)', '절연저항계(메거)', '충전 임팩드릴'], materials: ['MCC', '동력케이블', '제어반'] },
+      { id: 'power-feeder', name: '전력 간선 설비 공사', description: '분전반, 케이블 트레이, 버스덕트, 케이블 및 레이스웨이를 설치하는 작업', equipment: ['고소작업대(시저형 렌탈)', '전동 케이블 윈치(풀러)', '고속절단기'], materials: ['케이블 트레이', '버스덕트', '전력케이블'] },
+      { id: 'conduit-wiring', name: '전기 배관·배선 공사', description: '슬래브·벽체·노출 배관, 박스 및 전선을 설치·입선하는 작업', equipment: ['A형 사다리(말비계)', '해머드릴(타공기)', '전기드릴'], materials: ['전선관', '풀박스', '전선'] },
+      { id: 'grounding', name: '접지 설비 공사', description: '전력용·통신용·피뢰설비용 접지극과 접지선을 설치·측정하는 작업', equipment: ['접지저항계', '굴착기', '유압 단자압착기'], materials: ['접지선', '접지봉', '접지동판'] },
+      { id: 'lightning-protection', name: '피뢰 설비 공사', description: '낙뢰 보호용 수뢰부, 인하도선 및 접지설비를 설치하는 작업', equipment: ['고소작업차(스카이)', '접지저항계', '토크렌치'], materials: ['피뢰침', '인하도선', '접지선'] },
+      { id: 'solar-power', name: '태양광 발전 설비 공사', description: '태양광 모듈, 인버터, 구조물과 전력계통 연계 설비를 설치하는 작업', equipment: ['고소작업대(시저형 렌탈)', '토크렌치', '절연저항계(메거)'], materials: ['태양광 모듈', '인버터', '전력케이블'] },
+      { id: 'fire-detection', name: '자동화재탐지 설비 공사', description: '차동식·정온식·연기식 감지기, 수신반과 중계반을 설치하는 작업', equipment: ['A형 사다리(말비계)', '충전 임팩드릴', '특고압/저압 검전기'], materials: ['감지기', '수신반', '중계반'] }
     ]
   }
 ];
 
-const categoryForHazard = (name: string): HazardCategory => {
-  if (/(전기|전력|수변전|동력|간선|전등|전열|접지|피뢰|태양광|풍력|통신|CCTV|TV|방재|화재|피난|비상|소방|전화|출입|주차|배관·배선|관로|인입|변전실|발전기|항공장애|원격검침|전기시계|제설|충전)/.test(name)) return 'Electrical';
-  if (name.includes('방수')) return 'Chemical';
-  return 'Physical';
+import { getConstructionSuggestedHazards } from './constructionExpertDatabase';
+
+/**
+ * Creates the standard 5-stage comprehensive Electrical Work process set (자재반입 ~ 통전시험)
+ */
+export const createElectricalStandardProcesses = (): ManufacturingProcess[] => {
+  const baseTimestamp = Date.now();
+
+  const stages = [
+    {
+      name: '1단계: [통전 전] 전기 자재 반입 및 야적·현장 소운반',
+      workContent: '카고크레인 및 지게차를 사용하여 전선 드럼, 배전반 외함, 케이블 트레이, 전선관 등 고중량 전기 자재를 현장 하차하고 지정 야적장에 고임목 체결 적치 후 구역별 소운반을 실시함. (전기 인입 전 무전압 단계로 감전 위험 없음)',
+      equipment: ['카고크레인', '지게차', '핸드카트(대차)', '케이블 드럼 롤러', '섬유벨트/샤클'],
+      chemicals: ['방청유', '기계 그리스']
+    },
+    {
+      name: '2단계: [통전 전] 배관 및 케이블 트레이·레이스웨이 고소 설치',
+      workContent: '고소작업대(렌탈) 및 이동식비계를 활용하여 천장 4m 높이에 행거 전산볼트 앵커를 타공 설치하고 케이블 트레이 및 배관을 고소 거치·연결함. 고속절단기로 트레이 현장 절단 및 면취를 실시함. (통전 전 무전압 고소작업)',
+      equipment: ['고소작업대(시저형 렌탈)', '이동식비계(BT비계)', 'A형 사다리(말비계)', '해머드릴(타공기)', '고속절단기'],
+      chemicals: ['절삭유', '터치업 페인트']
+    },
+    {
+      name: '3단계: [통전 전] 케이블 풀링 및 배선 입선 공사',
+      workContent: '전동 케이블 윈치(풀러)와 가이드 롤러를 설치하고 트레이 및 배관 경로로 굵은 전력 간선 케이블을 포설 견인함. 풀링젤을 도포하고 인입구에서 케이블 유도를 실시함. (비통전 무전압 상태)',
+      equipment: ['전동 케이블 윈치(풀러)', '케이블 드럼 롤러', '풀링 로프'],
+      chemicals: ['윤활유(풀링젤)']
+    },
+    {
+      name: '4단계: [통전 전] 수배전반 기기 안착 및 단말 처리',
+      workContent: '전기실 콘크리트 패드 위로 도비 롤러 및 체인블록을 이용하여 수배전반 큐비클을 운반 안착하고 앵커로 고정함. 유압 압착기로 케이블 단말 러그를 압착 체결하고 부스바에 연결함. (통전 전 완전 무전압 상태)',
+      equipment: ['체인블록/도비 롤러', '유압 단자압착기', '충전 임팩드릴'],
+      chemicals: ['절연 바니시', '접촉개선제']
+    },
+    {
+      name: '5단계: [★통전 수반] 수전 및 절연측정·통전 시험 (시운전)',
+      workContent: '전기안전관리자 입회하에 1차 특고압(22.9kV) 수전 가압, 변압기 여자 시험을 거쳐 저압 분전반 메인 차단기를 순차 투입함. 상회전 확인, 절연저항계(메거) 측정 및 접지저항 계측, 부하 시운전을 실시함. (통전 상태의 고위험 감전·아크 관리 단계)',
+      equipment: ['특고압/저압 검전기', '절연저항계(메거)', '접지저항계', '특고압 절연장구(장갑/화/면)', 'LOTO(잠금장치·표지)'],
+      chemicals: ['절연유']
+    }
+  ];
+
+  return stages.map((stg, sIdx) => {
+    const rawHazards = getConstructionSuggestedHazards(stg.name, stg.equipment);
+    const hazards = rawHazards.map((item, hIdx) => {
+      const score = item.suggestedLikelihood * item.suggestedSeverity;
+      const level = score >= 16 ? 'High' : score >= 9 ? 'Medium' : 'Low';
+      const isAcceptable = score < 9;
+      const postL = Math.max(1, item.suggestedLikelihood - 2);
+      const postS = item.suggestedSeverity;
+      const postScore = postL * postS;
+
+      return {
+        id: `haz_std_${baseTimestamp}_${sIdx}_${hIdx}`,
+        hazardCategory: item.hazardCategory,
+        machineryRelated: item.machinery,
+        accidentType: item.accidentType,
+        hazardSituation: item.hazardSituation,
+        legalBasis: item.legalBasis,
+        currentSafetyMeasures: item.currentSafetyMeasures,
+        likelihood: item.suggestedLikelihood,
+        severity: item.suggestedSeverity,
+        riskScore: score,
+        riskLevel: level as 'Low' | 'Medium' | 'High',
+        isAcceptable,
+        reductionMeasures: item.reductionMeasures,
+        plannedDate: new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+        completionDate: '',
+        responsiblePerson: '현장 전기안전책임자',
+        postLikelihood: postL,
+        postSeverity: postS,
+        postRiskScore: postScore,
+        postRiskLevel: (postScore >= 9 ? 'Medium' : 'Low') as 'Low' | 'Medium' | 'High'
+      };
+    });
+
+    return {
+      id: `proc_std_${baseTimestamp}_${sIdx}`,
+      processName: stg.name,
+      detailedWorkContent: stg.workContent,
+      supervisor: '현장 전기공무 소장',
+      workerNames: ['작업조장', '전기공1', '전기공2', '안전유도원'],
+      equipmentUsed: stg.equipment,
+      chemicalsUsed: stg.chemicals,
+      hazards
+    };
+  });
 };
 
-export const createConstructionProcess = (category: ConstructionSubCategory): ManufacturingProcess => ({
-  id: `proc_${Date.now()}`,
-  processName: category.name,
-  detailedWorkContent: category.description,
-  supervisor: '현장 안전관리자',
-  workerNames: ['작업자1'],
-  equipmentUsed: category.equipment,
-  chemicalsUsed: category.materials,
-  hazards: [{
-    id: `haz_${Date.now()}`,
-    hazardCategory: categoryForHazard(category.name),
-    machineryRelated: category.equipment[0],
-    accidentType: '추락',
-    hazardSituation: `${category.name} 작업 중 작업발판 또는 개구부에서 작업자가 추락할 수 있음`,
-    legalBasis: '산업안전보건기준에 관한 규칙 (추락 위험 방지 조항)',
-    currentSafetyMeasures: '작업 전 안전점검 및 개인보호구 지급',
-    likelihood: 3,
-    severity: 5,
-    riskScore: 15,
-    riskLevel: 'High',
-    isAcceptable: false,
-    reductionMeasures: '작업발판과 난간을 설치하고 안전대를 걸이설비에 체결한 뒤 작업한다.',
-    plannedDate: new Date().toISOString().slice(0, 10),
-    completionDate: '',
-    responsiblePerson: '현장 안전관리자',
-    postLikelihood: 1,
-    postSeverity: 5,
-    postRiskScore: 5,
-    postRiskLevel: 'Low'
-  }]
-});
+/**
+ * Creates multi-step or trade-tailored construction processes for the selected subcategory
+ */
+export const createConstructionProcesses = (category: ConstructionSubCategory): ManufacturingProcess[] => {
+  const catName = category.name.toLowerCase();
+  const catId = category.id.toLowerCase();
+
+  // If the user selected general electrical work, produce the full 5-stage standard workflow
+  if (catId === 'power-equipment' || catId === 'electrical-work') {
+    return createElectricalStandardProcesses();
+  }
+
+  // Otherwise, produce a focused process tailored to the specific subcategory with high-quality hazards
+  const rawHazards = getConstructionSuggestedHazards(category.name, category.equipment);
+  const now = Date.now();
+
+  const hazards = rawHazards.slice(0, 5).map((item, idx) => {
+    const score = item.suggestedLikelihood * item.suggestedSeverity;
+    const level = score >= 16 ? 'High' : score >= 9 ? 'Medium' : 'Low';
+    const isAcceptable = score < 9;
+    const postL = Math.max(1, item.suggestedLikelihood - 2);
+    const postS = item.suggestedSeverity;
+    const postScore = postL * postS;
+
+    return {
+      id: `haz_proc_${now}_${idx}`,
+      hazardCategory: item.hazardCategory,
+      machineryRelated: item.machinery,
+      accidentType: item.accidentType,
+      hazardSituation: item.hazardSituation,
+      legalBasis: item.legalBasis,
+      currentSafetyMeasures: item.currentSafetyMeasures,
+      likelihood: item.suggestedLikelihood,
+      severity: item.suggestedSeverity,
+      riskScore: score,
+      riskLevel: level as 'Low' | 'Medium' | 'High',
+      isAcceptable,
+      reductionMeasures: item.reductionMeasures,
+      plannedDate: new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+      completionDate: '',
+      responsiblePerson: '현장 안전관리자',
+      postLikelihood: postL,
+      postSeverity: postS,
+      postRiskScore: postScore,
+      postRiskLevel: (postScore >= 9 ? 'Medium' : 'Low') as 'Low' | 'Medium' | 'High'
+    };
+  });
+
+  return [
+    {
+      id: `proc_${now}`,
+      processName: category.name,
+      detailedWorkContent: category.description,
+      supervisor: '현장 공종관리자',
+      workerNames: ['작업조장', '작업원1', '안전감시원'],
+      equipmentUsed: category.equipment,
+      chemicalsUsed: category.materials,
+      hazards
+    }
+  ];
+};
+
+/**
+ * Backward-compatible single-process creator
+ */
+export const createConstructionProcess = (category: ConstructionSubCategory): ManufacturingProcess => {
+  const procs = createConstructionProcesses(category);
+  return procs[0];
+};

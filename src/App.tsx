@@ -13,7 +13,7 @@ import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
 import PaymentPage from './components/PaymentPage';
 import CategorySelector from './components/CategorySelector';
-import { ConstructionSubCategory, createConstructionProcess } from './data/constructionCategories';
+import { ConstructionSubCategory, createConstructionProcess, createConstructionProcesses, createElectricalStandardProcesses } from './data/constructionCategories';
 import { ShieldCheck, Layers, Info, LogOut, Zap } from 'lucide-react';
 import { onAuthStateChanged, getCurrentUser, logOut, AuthUser } from './config/auth';
 import { getUserAssessments, saveAssessment, deleteAssessment, migrateLocalStorageToFirestore } from './config/firestore';
@@ -31,6 +31,25 @@ const DEFAULT_PROFILE: CompanyProfile = {
 
 // Seed realistic assessment data if localstorage is empty
 const INITIAL_ASSESSMENTS: RiskAssessment[] = [
+  {
+    id: 'assess_electrical_standard',
+    title: '2026년 건설현장 전기공사 정기 위험성평가 (자재반입~통전단계)',
+    assessmentType: 'regular',
+    createdAt: '2026-10-14',
+    updatedAt: '2026-10-14',
+    version: 1,
+    status: 'approved',
+    companyProfile: {
+      companyName: '(주)대한전설 건설사업본부',
+      ceoName: '홍길동',
+      address: '서울특별시 강남구 테헤란로 123',
+      employeeCount: 45,
+      businessRegNo: '123-45-67890',
+      siteManager: '김철수 부장',
+      department: '전기안전보건팀'
+    },
+    processes: createElectricalStandardProcesses()
+  },
   {
     id: 'assess_sample_1',
     title: '2026년 상반기 정기 제조업 금속 가공공정 위험성평가',
@@ -455,7 +474,7 @@ export default function App() {
           // Create a new assessment with the selected category
           setShowCategorySelector(false);
 
-          const categoryProcess = createConstructionProcess(category);
+          const categoryProcesses = createConstructionProcesses(category);
 
           // Create a new assessment
           const newAssessment: RiskAssessment = {
@@ -467,12 +486,7 @@ export default function App() {
             version: 1,
             status: 'draft',
             companyProfile: DEFAULT_PROFILE,
-            processes: [
-              {
-                id: `proc_${Date.now()}`,
-                ...categoryProcess
-              } as ManufacturingProcess
-            ]
+            processes: categoryProcesses
           };
 
           setAssessments([newAssessment, ...assessments]);
@@ -629,6 +643,7 @@ export default function App() {
               setEditingAssessmentId(activeViewing.id);
               setViewingAssessmentId(null);
             }}
+            onUpdateAssessment={(updated) => handleSave(updated)}
           />
         ) : activeEditing ? (
           <AssessmentForm

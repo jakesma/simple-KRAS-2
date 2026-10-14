@@ -74,31 +74,42 @@ async function startServer() {
 
     try {
       const prompt = `
-당신은 대한민국 산업안전보건법 및 KOSHA 가이드를 통달한 제조업 안전 진단 전문가입니다.
-사용자가 다음의 제조 공정 세부사항을 제공했습니다:
+당신은 대한민국 산업안전보건법, KOSHA 가이드 및 한국전기설비규정(KEC)을 통달한 건설업 현장(전기공사·가설·토목·골조·마감) 위험성평가 최고 전문가입니다.
+사용자가 다음의 건설 공정 세부사항을 제공했습니다:
 
 - 공정명: ${processName}
-- 상세 작업 활동: ${detailedWorkContent || '일반 제조 및 설비 취급 작업'}
+- 상세 작업 활동: ${detailedWorkContent || '일반 건설 및 설비 공사 작업'}
 - 관련 설비/기계: ${machineryRelated || '공정 전반 공통'}
 
-이 정보를 토대로 한국산업안전보건공단의 KRAS(위험성평가 시스템) 기준에 완벽히 부합하는 위험성평가 요인 1건을 정교하게 도출하십시오.
+한국산업안전보건공단(KOSHA)의 KRAS(위험성평가 시스템) 표준 지침에 따라 현실적이고 정밀한 위험성평가 요인 1건을 도출하십시오.
+
+★전기공사 및 현장 위험성평가 핵심 판정 원칙★:
+1. [공정 시작점 원칙]: 전기공사의 시작은 반드시 [자재 반입 및 야적·소운반]부터 출발합니다.
+2. [고위험 작업 반영]: 자재 반입 이후의 고소작업(고소작업대, 이동식비계, A형 사다리, 천장 배관/트레이 거치)과 장비작업(카고크레인, 지게차, 전동 케이블 윈치, 도비 롤러) 등 고위험 요소를 상세하고 구체적으로 분석하십시오.
+3. [★통전 여부 엄격 구분 원칙 - 매우 중요★]:
+   - 【통전 전 단계】(자재 반입, 야적, 소운반, 배관·트레이 고소 설치, 앵커 타공, 케이블 풀링/포설, 분전반 안착, 기구 취부 등):
+     전기가 전혀 투입되지 않은 완전 무전압 상태이므로 **감전(Electric shock)에 관한 내용은 절대 포함하지 마십시오.**
+     대신 중량물 낙하/깔림, 크레인 슬링 이탈, 고소작업대/비계 추락, 천장 협착, 고속절단기 칩 비산 및 날카로운 트레이 단면 베임, 전동 윈치 손가락 끼임 등 실제 발생하는 물리적·기계적 고위험 요인을 도출하십시오.
+   - 【통전 수반/가압 단계】(수전, 가압 시험, 차단기 투입, 변압기 시운전, 절연/접지저항 측정, 활선 근접 점검, 정전 LOTO 등):
+     전기가 실제로 공급되는 상태이므로 **전기적 위험(특고압 섬락 감전, 충전부 직접 접촉 감전, 상간 단락 아크 플래시 화상, 외함 누전 감전, 불시 가압 오투입 감전 등)**을 최우선으로 정밀 도출하십시오.
+
 결과는 반드시 한국어로 제공되어야 하며, 다음 필드 조건을 정확히 지켜 JSON으로 반환하십시오:
 
-1. hazardCategory: 기계적(Mechanical), 전기적(Electrical), 화학적(Chemical), 화재·폭발(FireExplosion), 근골격계/인간공학적(Ergonomic), 물리적(Physical), 작업환경(WorkEnvironment), 기타(Other) 중 가장 대표적인 한 종류 선택 (반드시 지정된 영문 토큰값 중 하나여야 함).
-2. accidentType: 예시: "끼임", "감전", "추락", "맞음", "벤", "중독", "화재·폭발", "넘어짐" 등 한국어로 작성.
-3. hazardSituation: 구체적인 유해위험요인 파악 상황 및 발생 상황과 예상되는 불리한 결과를 인과관계가 드러나도록 서술하십시오. (예: "프레스 기어 가드가 없는 상태에서 이물질을 수동 제거하려다 기어에 면장갑이 끌려들어가 손가락이 짓눌릴 위험")
-4. legalBasis: 구체적인 산업안전보건기준에 관한 규칙 제X조 (조항 명칭) 형태로 작성하십시오. 실제 존재하는 조항을 추천해야 합니다.
-5. currentSafetyMeasures: 현재 현장에서 안전조치 상태가 어떤지 대조군이 될 만한 미흡하거나 기본적인 상태를 명시하십시오. (예: "안전모는 쓰고 있으나 회전체 작업에 면장갑 착용 상태 유지")
-6. reductionMeasures: 위 위험을 근본적으로 감소시키기 위한 구체적이고 실현 가능한 기술적(인터락, 방호물), 관리적(안전규칙, 교육) 대책을 자세히 적어주십시오.
-7. suggestedLikelihood: 위험 발생 빈도 (1부터 5까지의 정수, 5가 가장 자주 발생)
-8. suggestedSeverity: 재해 발생 시 강도 (1부터 5까지의 정수, 5가 사망/중대재해)
+1. hazardCategory: 기계적(Mechanical), 전기적(Electrical), 화학적(Chemical), 화재·폭발(FireExplosion), 근골격계/인간공학적(Ergonomic), 물리적(Physical), 작업환경(WorkEnvironment), 기타(Other) 중 하나. (통전 전이면 Electrical 배제, 통전 수반이면 Electrical 또는 FireExplosion 선택)
+2. accidentType: 예: "떨어짐(추락)", "끼임(협착)", "물체에 맞음", "넘어짐(전도)", "감전(접촉/섬락)", "화재·폭발(아크)" 등.
+3. hazardSituation: 원인 행위, 대상 설비, 불안전한 상태와 발생할 피해 결과를 인과관계가 명확한 KOSHA 표준 문장으로 서술하십시오.
+4. legalBasis: 실제 존재하는 산업안전보건기준에 관한 규칙 제X조 (조항 명칭) 형태로 작성하십시오.
+5. currentSafetyMeasures: 건설 현장에서 흔히 볼 수 있는 미흡하거나 형식적인 안전조치 상태를 구체적으로 명시하십시오. (예: "고소작업대 탑승 시 안전대 착용하였으나 안전난간대 고리에 미체결 상태")
+6. reductionMeasures: 위험을 근본적으로 제거/감소시키기 위한 구체적이고 실현 가능한 기술적(방호장치, 인터록, LOTO), 관리적(안전기준, 유도자 배치, 2인1조) 대책을 서술하십시오.
+7. suggestedLikelihood: 위험 발생 빈도 (1부터 5까지의 정수, 5가 최고 빈도)
+8. suggestedSeverity: 재해 발생 시 피해 강도 (1부터 5까지의 정수, 5가 사망/중대재해)
 `;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.5-flash',
         contents: prompt,
         config: {
-          systemInstruction: 'You are a professional industrial safety officer in South Korea specializing in manufacturing plant risk assessments.',
+          systemInstruction: 'You are a premier South Korean construction safety engineer and electrical safety professional specializing in KOSHA KRAS risk assessments.',
           temperature: 0.2,
           responseMimeType: 'application/json',
           responseSchema: {

@@ -6,10 +6,11 @@
 import { useState } from 'react';
 import { RiskAssessment, ManufacturingProcess, HazardItem, HazardCategory, CompanyProfile, AuditLog } from '../types';
 import { CONSTRUCTION_EQUIPMENT_LIST, getConstructionSuggestedHazards } from '../data/constructionExpertDatabase';
+import { createElectricalStandardProcesses } from '../data/constructionCategories';
 import { 
   Building2, Users, Sliders, ClipboardList, AlertTriangle, 
   CheckCircle, ShieldAlert, Cpu, Sparkles, Plus, Trash2, 
-  ArrowLeft, ArrowRight, Save, History, PlayCircle 
+  ArrowLeft, ArrowRight, Save, History, PlayCircle, Zap
 } from 'lucide-react';
 
 interface AssessmentFormProps {
@@ -58,6 +59,12 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
     };
     setProcesses(prev => [...prev, newProc]);
     logLocalAudit('공정 추가', `신규 공정 '${newProc.processName}'을(를) 세부 리스트에 등록함.`);
+  };
+
+  const handleLoadElectricalStandard = () => {
+    const std = createElectricalStandardProcesses();
+    setProcesses(std);
+    logLocalAudit('전기 5단계 표준 공정 로드', '자재반입, 트레이 고소설치, 케이블 풀링, 기기 안착, 통전 시험 5단계 공정을 일괄 탑재함.');
   };
 
   const handleUpdateProcess = (procId: string, updates: Partial<ManufacturingProcess>) => {
@@ -535,24 +542,37 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
           <div className="space-y-6" id="wizard-step2">
             
             {/* Step Intro */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex items-center justify-between">
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  <Sliders size={16} /> 공정 및 제조 자원(기계·설비/물질) 등록
+                  <Sliders size={16} /> 현장 공정 및 사용 장비·자재 등록
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">평가 대상이 될 핵심 가동 라인 및 각 설비를 바인딩하십시오.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">평가 대상이 될 세부 공정 단계 및 투입 장비·자재를 등록하십시오.</p>
               </div>
-              <button
-                onClick={handleAddProcess}
-                className="bg-slate-950 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-slate-800 transition flex items-center gap-1.5"
-                id="add-process-btn"
-              >
-                <Plus size={14} /> 공정 추가
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleLoadElectricalStandard}
+                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  id="load-electrical-std-btn"
+                  title="자재반입부터 고소작업, 배선, 기기안착, 통전시험까지 5단계 표준 공정을 자동으로 일괄 등록합니다."
+                >
+                  <Zap size={13} />
+                  ⚡ 전기공사 5단계 표준 공정 일괄 등록
+                </button>
+                <button
+                  onClick={handleAddProcess}
+                  className="bg-slate-950 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-slate-800 transition flex items-center gap-1.5 cursor-pointer"
+                  id="add-process-btn"
+                >
+                  <Plus size={14} /> 공정 추가
+                </button>
+              </div>
             </div>
 
             {/* List of Processes */}
-            {processes.map((p, index) => (
+            {processes.map((p, index) => {
+              const isEnergized = /(통전|수전|가압|시운전|활선|loto|정전|차단기)/i.test(p.processName);
+              return (
               <div key={p.id} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 shadow-sm relative">
                 {/* Delete Process Button */}
                 <button
@@ -562,6 +582,20 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                 >
                   <Trash2 size={15} />
                 </button>
+
+                {/* Energization Stage Badge */}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold text-slate-600">공정 {index + 1}</span>
+                  {isEnergized ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                      ⚡ 통전 수반 단계 (감전·아크 플래시 화재 고위험 관리)
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
+                      🛡️ 통전 전 단계 (감전 배제 / 양중·고소·장비·협착 고위험 관리)
+                    </span>
+                  )}
+                </div>
 
                 {/* Process Header Field */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -689,7 +723,8 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                 </div>
 
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
 
@@ -710,11 +745,24 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
               </p>
             </div>
 
-            {processes.map((p) => (
+            {processes.map((p) => {
+              const isEnergized = /(통전|수전|가압|시운전|활선|loto|정전|차단기)/i.test(p.processName);
+              return (
               <div key={p.id} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 shadow-sm" id={`step3-proc-${p.id}`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
                   <div>
-                    <h4 className="text-xs font-extrabold text-slate-400 uppercase">Process Group</h4>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="text-xs font-extrabold text-slate-400 uppercase">공정 분류</h4>
+                      {isEnergized ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                          ⚡ 통전 수반 (감전·아크 위험)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
+                          🛡️ 통전 전 (감전 제외 / 추락·협착·낙하)
+                        </span>
+                      )}
+                    </div>
                     <h3 className="text-sm font-bold text-slate-900">{p.processName}</h3>
                   </div>
                   
@@ -842,7 +890,8 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                 </div>
 
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
 

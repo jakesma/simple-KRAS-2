@@ -66,6 +66,21 @@ export interface ManufacturingProcess {
   hazards: HazardItem[]; // 도출된 위험 요인 목록
 }
 
+export interface AssessmentPhotoItem {
+  title: string;
+  location: string;
+  description: string;
+  imageUrl: string;
+}
+
+export interface AssessmentPhotoSheet {
+  title?: string;
+  inspector?: string;
+  inspectionDate?: string;
+  photo1?: AssessmentPhotoItem;
+  photo2?: AssessmentPhotoItem;
+}
+
 export interface RiskAssessment {
   id: string;
   title: string; // 평가명 (예: 2026년 정기 위험성평가)
@@ -76,6 +91,7 @@ export interface RiskAssessment {
   status: WorkflowStatus;
   companyProfile: CompanyProfile;
   processes: ManufacturingProcess[];
+  photoSheet?: AssessmentPhotoSheet;
 }
 
 export interface AuditLog {
