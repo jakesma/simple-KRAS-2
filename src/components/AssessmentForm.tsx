@@ -327,7 +327,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
       companyProfile: profile,
       processes,
       status: finalStatus,
-      updatedAt: new Date().toLocaleDateString(),
+      updatedAt: new Date().toISOString().split('T')[0],
       version: nextStatus === 'approved' ? assessment.version + 1 : assessment.version
     };
 

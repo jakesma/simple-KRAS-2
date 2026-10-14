@@ -35,13 +35,15 @@ interface PaymentPageProps {
   description?: string;
   onSuccess?: (result: PaymentSuccessResult) => void;
   onCancel?: () => void;
+  onComplete?: () => void;
 }
 
 export default function PaymentPage({ 
   amount, 
   description = 'SIMPLE KRAS 위험성평가 플랫폼 구독',
   onSuccess,
-  onCancel 
+  onCancel,
+  onComplete 
 }: PaymentPageProps) {
   const [selectedMethod, setSelectedMethod] = useState<KgInicisPayMethod>('CARD');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -171,6 +173,34 @@ export default function PaymentPage({
     }
   };
 
+  const handleSimulateTestPayment = () => {
+    if (!customerName.trim()) {
+      setErrorMessage('주문자 성명/담당자명을 먼저 입력해 주세요.');
+      return;
+    }
+    if (!customerPhone.trim()) {
+      setErrorMessage('연락처(휴대폰 번호)를 먼저 입력해 주세요.');
+      return;
+    }
+
+    setErrorMessage(null);
+    const testResult: PaymentSuccessResult = {
+      success: true,
+      paymentId: `kras-test-${Date.now()}`,
+      txId: `tx-test-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      orderName: description,
+      amount,
+      method: selectedMethod,
+      paidAt: new Date().toISOString(),
+      receiptUrl: 'https://iniweb.inicis.com/DefaultSettings/receipt'
+    };
+
+    setCompletedPayment(testResult);
+    if (onSuccess) {
+      onSuccess(testResult);
+    }
+  };
+
   // 결제 완료 화면
   if (completedPayment) {
     return (
@@ -231,7 +261,8 @@ export default function PaymentPage({
           <div className="flex gap-3">
             <button
               onClick={() => {
-                if (onCancel) onCancel();
+                if (onComplete) onComplete();
+                else if (onCancel) onCancel();
                 else window.location.href = '/';
               }}
               className="flex-1 py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition shadow-md flex items-center justify-center gap-2"
@@ -501,6 +532,21 @@ export default function PaymentPage({
               </>
             )}
           </button>
+
+          {/* 테스트 검증용 시뮬레이션 버튼 */}
+          <div className="pt-2 border-t border-slate-200">
+            <button
+              type="button"
+              onClick={handleSimulateTestPayment}
+              className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs transition border border-slate-300 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+              title="실제 카드 청구 없이 결제 완료 화면, 영수증 생성, 비회원 권한 승격 및 대시보드 연동을 즉시 테스트합니다"
+            >
+              <span>🧪 결제 프로세스 가상 테스트 (시뮬레이션 승인)</span>
+            </button>
+            <p className="text-[11px] text-center text-slate-400 mt-1">
+              * 가상 테스트를 통해 결제 완료 후 대시보드 자동 승격 및 보고서 출력 권한 활성화를 즉시 확인할 수 있습니다.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -563,7 +609,7 @@ export default function PaymentPage({
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-3">
               <button
                 type="button"
                 onClick={() => setShowConfigModal(false)}
@@ -579,6 +625,17 @@ export default function PaymentPage({
                 설정 저장
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowConfigModal(false);
+                handleSimulateTestPayment();
+              }}
+              className="w-full py-2 px-3 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition border border-dashed border-slate-300"
+            >
+              🧪 키 입력 없이 가상 테스트 결제 바로 승인하기
+            </button>
           </div>
         </div>
       )}

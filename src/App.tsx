@@ -204,6 +204,9 @@ export default function App() {
   const [showPayment, setShowPayment] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(35000); // Default: Pro plan monthly
   const [paymentPlan, setPaymentPlan] = useState('Pro');
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(() => {
+    return typeof window !== 'undefined' ? localStorage.getItem('kras_subscription_plan') : null;
+  });
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -473,6 +476,11 @@ export default function App() {
         onSelectCategory={(category: ConstructionSubCategory) => {
           // Create a new assessment with the selected category
           setShowCategorySelector(false);
+          setShowLanding(false);
+          if (!authUser) {
+            localStorage.setItem('kras_construction_guest_mode', 'true');
+            setIsGuestMode(true);
+          }
 
           const categoryProcesses = createConstructionProcesses(category);
 
@@ -513,11 +521,20 @@ export default function App() {
             localStorage.setItem('kras_construction_guest_mode', 'true');
             setIsGuestMode(true);
           }
+          setSubscriptionPlan(paymentPlan);
           localStorage.setItem('kras_subscription_plan', paymentPlan);
           localStorage.setItem('kras_subscription_paid_at', new Date().toISOString());
           localStorage.setItem('kras_subscription_order_id', result.paymentId);
           if (result.orderName) {
             localStorage.setItem('kras_subscription_order_name', result.orderName);
+          }
+        }}
+        onComplete={() => {
+          setShowPayment(false);
+          setShowLanding(false);
+          if (!authUser) {
+            localStorage.setItem('kras_construction_guest_mode', 'true');
+            setIsGuestMode(true);
           }
         }}
         onCancel={() => {
@@ -594,18 +611,25 @@ export default function App() {
 
           {/* Plan Upgrade / Purchase Button */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setPaymentPlan('Pro');
-                setPaymentAmount(380000);
-                setShowPayment(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-sm transition"
-              title="PRO 플랜 구매 (비회원/회원 모두 결제 가능)"
-            >
-              <Zap size={14} className="fill-current text-amber-300" />
-              <span>PRO 플랜 구매</span>
-            </button>
+            {subscriptionPlan === 'Pro' ? (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-sm">
+                <Zap size={14} className="fill-current text-amber-400" />
+                <span>PRO 회원 이용 중</span>
+              </span>
+            ) : (
+              <button
+                onClick={() => {
+                  setPaymentPlan('Pro');
+                  setPaymentAmount(380000);
+                  setShowPayment(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-sm transition cursor-pointer"
+                title="PRO 플랜 구매 (비회원/회원 모두 결제 가능)"
+              >
+                <Zap size={14} className="fill-current text-amber-300" />
+                <span>PRO 플랜 구매</span>
+              </button>
+            )}
           </div>
 
           {/* User Meta */}

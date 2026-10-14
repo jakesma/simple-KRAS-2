@@ -86,7 +86,7 @@ export default function AssessmentList({
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs hover:shadow-sm transition flex items-center justify-between">
             <div>
               <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">총 평가 일지</span>
-              <span className="text-2xl font-black text-slate-800 mt-1 block">14</span>
+              <span className="text-2xl font-black text-slate-800 mt-1 block">{totalCount}건</span>
             </div>
             <div className="bg-slate-50 p-3 rounded-lg text-slate-700">
               <ClipboardList size={20} />
@@ -95,7 +95,9 @@ export default function AssessmentList({
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs hover:shadow-sm transition flex items-center justify-between">
             <div>
               <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">최종 승인/이행</span>
-              <span className="text-2xl font-black text-emerald-600 mt-1 block">42%</span>
+              <span className="text-2xl font-black text-emerald-600 mt-1 block">
+                {totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0}%
+              </span>
             </div>
             <div className="bg-emerald-50 p-3 rounded-lg text-emerald-600">
               <ShieldCheck size={20} />
@@ -104,7 +106,7 @@ export default function AssessmentList({
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs hover:shadow-sm transition flex items-center justify-between">
             <div>
               <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">결재 승인 대기</span>
-              <span className="text-2xl font-black text-blue-600 mt-1 block">2건</span>
+              <span className="text-2xl font-black text-blue-600 mt-1 block">{reviewCount}건</span>
             </div>
             <div className="bg-blue-50 p-3 rounded-lg text-blue-600">
               <Calendar size={20} />
