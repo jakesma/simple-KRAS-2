@@ -35,13 +35,13 @@ npm install
 
 #### 환경 변수 설정 (.env.local):
 ```bash
-# Firebase Configuration
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
+# Construction Firebase Configuration
+VITE_CONSTRUCTION_FIREBASE_API_KEY=your_api_key
+VITE_CONSTRUCTION_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_CONSTRUCTION_FIREBASE_PROJECT_ID=your_project_id
+VITE_CONSTRUCTION_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_CONSTRUCTION_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_CONSTRUCTION_FIREBASE_APP_ID=your_app_id
 
 # API Configuration
 VITE_API_URL=http://localhost:3000

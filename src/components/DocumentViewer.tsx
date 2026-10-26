@@ -376,7 +376,7 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-900">
                     <th rowSpan={2} className="border-r border-slate-900 w-10 font-bold p-1">결재</th>
-                    <th className="border-r border-slate-900 p-1 font-medium">작성자 (안전인)</th>
+                    <th className="border-r border-slate-900 p-1 font-medium">작성자 (안전)</th>
                     <th className="p-1 font-medium">승인자 (대표이사)</th>
                   </tr>
                 </thead>
@@ -384,7 +384,7 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
                   <tr className="h-12">
                     <td className="border-r border-slate-900 bg-slate-50 p-1 font-bold text-slate-500">서명</td>
                     <td className="border-r border-slate-900 p-1 text-slate-400 italic">
-                      {assessment.companyProfile.siteManager || '인'}
+                      {assessment.companyProfile.siteManager || '서명'}
                     </td>
                     <td className="p-1 text-slate-400 italic">
                       {assessment.status === 'approved' || assessment.status === 'completed' ? (
