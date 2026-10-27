@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RiskAssessment, HazardItem, AssessmentPhotoSheet, AssessmentPhotoItem } from '../types';
 import { 
   FileText, Printer, ArrowLeft, Download, ShieldAlert, 
@@ -24,6 +24,56 @@ type DocumentTab = 'survey' | 'hazard' | 'estimation' | 'reduction' | 'kras';
 export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit, onUpdateAssessment }: DocumentViewerProps) {
   const [activeTab, setActiveTab] = useState<DocumentTab>('kras');
   const [copied, setCopied] = useState(false);
+  const [includeWorkerSignatures, setIncludeWorkerSignatures] = useState(true);
+  const [includePhotoSheet, setIncludePhotoSheet] = useState(true);
+
+  // Derive unique workers from all processes for automatic signature list sizing
+  const detectedWorkers = Array.from(
+    new Set(
+      assessment.processes
+        .flatMap((p) => p.workerNames || [])
+        .map((w) => w.trim())
+        .filter(Boolean)
+    )
+  );
+
+  // If workers are registered, format exactly those workers.
+  // Otherwise, fallback to a compact row count (2~4 rows) based on employee count so it never spills over.
+  const workerRows = detectedWorkers.length > 0
+    ? detectedWorkers.map((name, idx) => ({
+        no: idx + 1,
+        name,
+        role: idx === 0 ? '작업조장/관리' : '현장작업원',
+        note: '참여확인'
+      }))
+    : Array.from({
+        length: Math.min(Math.max(Number(assessment.companyProfile.employeeCount) || 3, 2), 4)
+      }, (_, idx) => ({
+        no: idx + 1,
+        name: '',
+        role: idx === 0 ? '작업조장' : '작업원',
+        note: ''
+      }));
+
+  // Auto-suppress browser print header (document.title) during window.print
+  useEffect(() => {
+    let originalTitle = document.title;
+    const handleBeforePrint = () => {
+      originalTitle = document.title;
+      document.title = '';
+    };
+    const handleAfterPrint = () => {
+      document.title = originalTitle;
+    };
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
 
   // Photo Sheet State (Applied only to standard KRAS evaluation sheet)
   const [photoSheet, setPhotoSheet] = useState<AssessmentPhotoSheet>(() => {
@@ -149,13 +199,18 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
   );
 
   const handlePrint = () => {
+    const originalTitle = document.title;
+    document.title = '';
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   };
 
   // Helper to copy standard document representation as markdown table
   const handleCopyMarkdown = () => {
     let markdown = `# 위험성평가 보고서 - ${assessment.title}\n\n`;
-    markdown += `* **사업장명**: ${assessment.companyProfile.companyName}\n`;
+    markdown += `* **현장명**: ${assessment.companyProfile.companyName}\n`;
     markdown += `* **대표자**: ${assessment.companyProfile.ceoName}\n`;
     markdown += `* **평가 구분**: ${assessment.assessmentType === 'regular' ? '정기평가' : '수시평가'}\n`;
     markdown += `* **평가일**: ${assessment.createdAt}\n\n`;
@@ -340,12 +395,42 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
         </div>
       </div>
 
+      {/* Print Options Quick Bar (Hidden on Print) */}
+      <div className="max-w-7xl mx-auto px-6 pt-4 pb-0 print:hidden" id="doc-print-options-bar">
+        <div className="bg-amber-50/80 border border-amber-200 rounded-lg p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-amber-900 font-medium">
+            <span className="font-bold bg-amber-200/90 text-amber-900 px-2 py-0.5 rounded text-[11px]">인쇄 최적화 설정</span>
+            <span>브라우저 인쇄 시 헤더(제목) 및 푸터(URL)가 자동 제외되며, 1페이지에 깔끔하게 맞춰집니다.</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-1.5 cursor-pointer text-slate-800 font-medium select-none">
+              <input
+                type="checkbox"
+                checked={includeWorkerSignatures}
+                onChange={(e) => setIncludeWorkerSignatures(e.target.checked)}
+                className="rounded text-slate-900 focus:ring-slate-900 cursor-pointer"
+              />
+              <span>작업자 서명부 포함 ({workerRows.length}명 자동구성)</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer text-slate-800 font-medium select-none">
+              <input
+                type="checkbox"
+                checked={includePhotoSheet}
+                onChange={(e) => setIncludePhotoSheet(e.target.checked)}
+                className="rounded text-slate-900 focus:ring-slate-900 cursor-pointer"
+              />
+              <span>현장 사진대지 포함 (2페이지)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       {/* Main Printable Document Sheet */}
-      <div className="max-w-7xl mx-auto px-6 py-10 print:p-0" id="printable-sheet">
+      <div className="max-w-7xl mx-auto px-6 py-6 print:p-0" id="printable-sheet">
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 sm:p-12 print:border-none print:shadow-none print:p-0 print:text-black">
           
           {/* Document Common Title Header */}
-          <div className="text-center border-b-4 border-double border-slate-900 pb-4 mb-8" id="sheet-title-header">
+          <div className="text-center border-b-4 border-double border-slate-900 pb-3 mb-6 print:pb-2 print:mb-2" id="sheet-title-header">
             <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase mb-1">
               {activeTab === 'survey' && '안 전 보 건 정 보 사 전 조 사 서'}
               {activeTab === 'hazard' && '유 해 · 위 험 요 인 파 악 표'}
@@ -358,16 +443,36 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
             </p>
           </div>
 
-          {/* Business & Review Approval Sign Block */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-8 print:grid-cols-2" id="sheet-meta-block">
-            {/* Left Info */}
-            <div className="space-y-1 text-xs">
-              <div className="flex"><span className="w-24 font-bold text-slate-500">평가명:</span> <span className="text-slate-950 font-semibold">{assessment.title}</span></div>
-              <div className="flex"><span className="w-24 font-bold text-slate-500">사업장명:</span> <span className="text-slate-950">{assessment.companyProfile.companyName}</span></div>
-              <div className="flex"><span className="w-24 font-bold text-slate-500">대표자명:</span> <span className="text-slate-950">{assessment.companyProfile.ceoName}</span></div>
-              <div className="flex"><span className="w-24 font-bold text-slate-500">소재지:</span> <span className="text-slate-950">{assessment.companyProfile.address}</span></div>
-              <div className="flex"><span className="w-24 font-bold text-slate-500">근로자수:</span> <span className="w-24 text-right text-slate-950">{assessment.companyProfile.employeeCount} 명</span></div>
-              <div className="flex"><span className="w-24 font-bold text-slate-500">작성일자:</span> <span className="w-24 text-right text-slate-950 font-mono">{assessment.createdAt}</span></div>
+          {/* Business & Review Approval Sign Block (Aligned Table Layout) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start mb-6 print:grid-cols-2 print:mb-2.5" id="sheet-meta-block">
+            {/* Left Info Table - Rows and columns aligned with precision */}
+            <div className="flex-1" id="sheet-info-table-wrapper">
+              <table className="w-full border-collapse border border-slate-900 text-[11px]" id="sheet-info-table">
+                <tbody>
+                  <tr className="border-b border-slate-900">
+                    <th className="bg-slate-50 border-r border-slate-900 w-20 p-1.5 font-bold text-slate-700 text-center">평가명</th>
+                    <td colSpan={3} className="p-1.5 font-bold text-slate-950">{assessment.title}</td>
+                  </tr>
+                  <tr className="border-b border-slate-900">
+                    <th className="bg-slate-50 border-r border-slate-900 w-20 p-1.5 font-bold text-slate-700 text-center">현장명</th>
+                    <td className="border-r border-slate-900 p-1.5 text-slate-900 font-semibold">{assessment.companyProfile.companyName || '-'}</td>
+                    <th className="bg-slate-50 border-r border-slate-900 w-20 p-1.5 font-bold text-slate-700 text-center">대표자명</th>
+                    <td className="p-1.5 text-slate-900 font-semibold">{assessment.companyProfile.ceoName || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-slate-900">
+                    <th className="bg-slate-50 border-r border-slate-900 w-20 p-1.5 font-bold text-slate-700 text-center">소재지</th>
+                    <td colSpan={3} className="p-1.5 text-slate-900">{assessment.companyProfile.address || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th className="bg-slate-50 border-r border-slate-900 w-20 p-1.5 font-bold text-slate-700 text-center">근로자수</th>
+                    <td className="border-r border-slate-900 p-1.5 text-slate-900 font-semibold">
+                      {assessment.companyProfile.employeeCount ? `${assessment.companyProfile.employeeCount} 명` : '-'}
+                    </td>
+                    <th className="bg-slate-50 border-r border-slate-900 w-20 p-1.5 font-bold text-slate-700 text-center">작성일자</th>
+                    <td className="p-1.5 font-mono text-slate-900">{assessment.createdAt}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             {/* Right Standard Korean Approval Box */}
@@ -381,12 +486,12 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="h-12">
+                  <tr className="h-16 signature-row">
                     <td className="border-r border-slate-900 bg-slate-50 p-1 font-bold text-slate-500">서명</td>
-                    <td className="border-r border-slate-900 p-1 text-slate-400 italic">
-                      {assessment.companyProfile.siteManager || '서명'}
+                    <td className="border-r border-slate-900 p-2 text-slate-400 italic align-middle">
+                      {assessment.companyProfile.siteManager || '(서명/인)'}
                     </td>
-                    <td className="p-1 text-slate-400 italic">
+                    <td className="p-2 text-slate-400 italic align-middle">
                       {assessment.status === 'approved' || assessment.status === 'completed' ? (
                         <span className="text-blue-600 font-bold not-italic">서명완료</span>
                       ) : (
@@ -414,7 +519,7 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
               <h3 className="text-sm font-bold text-slate-900 bg-slate-100 py-1.5 px-3 border-l-4 border-slate-900">
                 1. 공정별 투입자원 및 작업환경 기초 조사
               </h3>
-              <table className="w-full text-xs text-left border-collapse border border-slate-900" id="survey-table">
+              <table className="w-full text-xs text-left border-collapse border border-slate-900 border-b-2 border-b-slate-900" id="survey-table">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-900 text-slate-700 font-bold text-center">
                     <th className="border-r border-slate-900 p-2.5 w-1/5">공정명</th>
@@ -450,7 +555,7 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
               <h3 className="text-sm font-bold text-slate-900 bg-slate-100 py-1.5 px-3 border-l-4 border-slate-900">
                 2. 공정별 현장 순회 및 인터뷰 기반 유해·위험요인 도출표
               </h3>
-              <table className="w-full text-xs text-left border-collapse border border-slate-900" id="hazard-table">
+              <table className="w-full text-xs text-left border-collapse border border-slate-900 border-b-2 border-b-slate-900" id="hazard-table">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-900 text-slate-700 font-bold text-center">
                     <th className="border-r border-slate-900 p-2.5 w-1/6">공정명</th>
@@ -505,7 +610,7 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
               <h3 className="text-sm font-bold text-slate-900 bg-slate-100 py-1.5 px-3 border-l-4 border-slate-900">
                 3. 빈도 × 강도 계산법 기반 위험성 정량 추정 및 허용 판정서
               </h3>
-              <table className="w-full text-xs text-left border-collapse border border-slate-900" id="estimation-table">
+              <table className="w-full text-xs text-left border-collapse border border-slate-900 border-b-2 border-b-slate-900" id="estimation-table">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-900 text-slate-700 font-bold text-center">
                     <th className="border-r border-slate-900 p-2 w-1/6">공정명</th>
@@ -566,7 +671,7 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
               <h3 className="text-sm font-bold text-slate-900 bg-slate-100 py-1.5 px-3 border-l-4 border-slate-900">
                 4. 개선 대상 유해위험요인 감소 대책 실행 및 추적 계획서
               </h3>
-              <table className="w-full text-xs text-left border-collapse border border-slate-900" id="reduction-table">
+              <table className="w-full text-xs text-left border-collapse border border-slate-900 border-b-2 border-b-slate-900" id="reduction-table">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-900 text-slate-700 font-bold text-center">
                     <th className="border-r border-slate-900 p-2 w-1/6">공정명</th>
@@ -632,7 +737,7 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
                 5. KRAS 통합형 표준 위험성평가 종합 결과지 (통합 양식)
               </h3>
               <div className="overflow-x-auto w-full" id="kras-scroll-container">
-                <table className="w-full text-[10px] text-left border-collapse border border-slate-900 min-w-[850px]" id="kras-master-table">
+                <table className="w-full text-[10px] text-left border-collapse border border-slate-900 border-b-2 border-b-slate-900 min-w-[850px]" id="kras-master-table">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-900 text-slate-700 font-bold text-center">
                       <th className="border-r border-slate-900 p-1.5 w-24">공정명</th>
@@ -680,84 +785,93 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
                 </table>
               </div>
 
-              <div className="pt-2" id="worker-signature-section">
-                <h3 className="mb-2 text-sm font-bold text-slate-900">작업자 확인 및 서명부</h3>
-                <table className="w-full border-collapse border border-slate-900 text-xs text-center" id="worker-signature-table">
-                  <thead>
-                    <tr className="bg-slate-50 font-bold text-slate-700">
-                      <th className="w-16 border-r border-slate-900 p-2">NO</th>
-                      <th className="w-[25%] border-r border-slate-900 p-2">이름</th>
-                      <th className="w-[20%] border-r border-slate-900 p-2">직책</th>
-                      <th className="w-[25%] border-r border-slate-900 p-2">서명</th>
-                      <th className="p-2">비고</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Array.from({ length: 15 }, (_, index) => (
-                      <tr key={index} className="h-9 border-t border-slate-900">
-                        <td className="border-r border-slate-900 font-mono">{index + 1}</td>
-                        <td className="border-r border-slate-900"></td>
-                        <td className="border-r border-slate-900"></td>
-                        <td className="border-r border-slate-900"></td>
-                        <td></td>
+              {/* Worker Signature Section - sized to actual worker count and finishes with clean bottom border */}
+              {includeWorkerSignatures && (
+                <div className="pt-2.5 print:pt-1" id="worker-signature-section">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <h3 className="text-xs font-bold text-slate-900">작업자 확인 및 서명부</h3>
+                    <div className="flex items-center gap-2 print:hidden text-[11px] text-slate-500">
+                      <span>※ 등록 작업자 수({workerRows.length}명)에 맞춰 자동 구성됨 (페이지 넘김 방지)</span>
+                    </div>
+                  </div>
+                  <table className="w-full border-collapse border border-slate-900 border-b-2 border-b-slate-900 text-xs text-center" id="worker-signature-table">
+                    <thead>
+                      <tr className="bg-slate-50 font-bold text-slate-700 text-[11px]">
+                        <th className="w-12 border-r border-slate-900 p-1">NO</th>
+                        <th className="w-[25%] border-r border-slate-900 p-1">이름</th>
+                        <th className="w-[20%] border-r border-slate-900 p-1">직책</th>
+                        <th className="w-[25%] border-r border-slate-900 p-1">서명</th>
+                        <th className="p-1">비고</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {workerRows.map((worker, index) => (
+                        <tr key={index} className="h-7 border-t border-slate-900 text-[11px]">
+                          <td className="border-r border-slate-900 font-mono text-slate-600">{worker.no}</td>
+                          <td className="border-r border-slate-900 font-semibold text-slate-900">{worker.name}</td>
+                          <td className="border-r border-slate-900 text-slate-700">{worker.role}</td>
+                          <td className="border-r border-slate-900 text-slate-400 italic font-sans">(서명)</td>
+                          <td className="text-slate-500">{worker.note}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* ============================================================== */}
               {/* 6. PHOTO EVIDENCE SHEET (사진대지 - 표준위험평가표 전용)        */}
               {/* ============================================================== */}
-              <div 
-                className="pt-8 print:break-before-page border-t-2 border-slate-200 print:border-none mt-8" 
-                id="photo-sheet-section"
-                style={{ breakBefore: 'page', pageBreakBefore: 'always' }}
-              >
-                {/* Section Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b-2 border-slate-900 pb-2 gap-2">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                      <Camera size={18} className="text-slate-900" />
-                      위험성평가 현장 확인 및 개선 조치 사진대지 (2매 첨부)
-                    </h3>
-                    <p className="text-[11px] text-slate-500 mt-0.5 print:hidden">
-                      ※ 표준위험평가표의 개선 전·후 실사 사진 2장을 등록합니다. (인쇄 및 PDF 출력 시 별도의 사진대지 페이지로 출력됩니다.)
-                    </p>
+              {includePhotoSheet && (
+                <div 
+                  className="pt-8 print:break-before-page border-t-2 border-slate-200 print:border-none mt-8" 
+                  id="photo-sheet-section"
+                  style={{ breakBefore: 'page', pageBreakBefore: 'always' }}
+                >
+                  {/* Section Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 border-b-2 border-slate-900 pb-2 gap-2">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <Camera size={18} className="text-slate-900" />
+                        위험성평가 현장 확인 및 개선 조치 사진대지 (2매 첨부)
+                      </h3>
+                      <p className="text-[11px] text-slate-500 mt-0.5 print:hidden">
+                        ※ 표준위험평가표의 개선 전·후 실사 사진 2장을 등록합니다. (인쇄 및 PDF 출력 시 2페이지로 깔끔하게 분리 출력됩니다.)
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 print:hidden self-start sm:self-auto">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        ★ 표준위험평가표 전용 부속서
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 print:hidden self-start sm:self-auto">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
-                      ★ 표준위험평가표 전용 부속서
-                    </span>
-                  </div>
-                </div>
 
-                {/* Photo Sheet Info Table (Official Korean Standard Header) */}
-                <table className="w-full border-collapse border border-slate-900 text-xs mb-5" id="photo-sheet-info-table">
-                  <tbody>
-                    <tr className="border-b border-slate-900">
-                      <th className="bg-slate-100 p-2 border-r border-slate-900 w-24 text-center font-bold">사업장명</th>
-                      <td className="p-2 border-r border-slate-900 w-1/3 font-semibold">{assessment.companyProfile.companyName || '사업장 미지정'}</td>
-                      <th className="bg-slate-100 p-2 border-r border-slate-900 w-24 text-center font-bold">평가 공종명</th>
-                      <td className="p-2 font-semibold">{assessment.title}</td>
-                    </tr>
-                    <tr>
-                      <th className="bg-slate-100 p-2 border-r border-slate-900 text-center font-bold">점검/촬영일</th>
-                      <td className="p-2 border-r border-slate-900">
-                        <input
-                          type="date"
-                          value={photoSheet.inspectionDate || assessment.createdAt}
-                          onChange={(e) => handleUpdatePhotoSheet({ ...photoSheet, inspectionDate: e.target.value })}
-                          className="w-full bg-transparent p-0 text-xs border-0 focus:ring-1 focus:ring-slate-900 rounded print:border-none font-mono"
-                        />
-                      </td>
-                      <th className="bg-slate-100 p-2 border-r border-slate-900 text-center font-bold">점검·확인자</th>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          value={photoSheet.inspector || assessment.companyProfile.siteManager || '안전보건관리자'}
-                          onChange={(e) => handleUpdatePhotoSheet({ ...photoSheet, inspector: e.target.value })}
-                          placeholder="점검자 성명 입력"
+                  {/* Photo Sheet Info Table (Official Korean Standard Header) */}
+                  <table className="w-full border-collapse border border-slate-900 text-xs mb-5" id="photo-sheet-info-table">
+                    <tbody>
+                      <tr className="border-b border-slate-900">
+                        <th className="bg-slate-100 p-2 border-r border-slate-900 w-24 text-center font-bold">현장명</th>
+                        <td className="p-2 border-r border-slate-900 w-1/3 font-semibold">{assessment.companyProfile.companyName || '현장명 미지정'}</td>
+                        <th className="bg-slate-100 p-2 border-r border-slate-900 w-24 text-center font-bold">평가 공종명</th>
+                        <td className="p-2 font-semibold">{assessment.title}</td>
+                      </tr>
+                      <tr>
+                        <th className="bg-slate-100 p-2 border-r border-slate-900 text-center font-bold">점검/촬영일</th>
+                        <td className="p-2 border-r border-slate-900">
+                          <input
+                            type="date"
+                            value={photoSheet.inspectionDate || assessment.createdAt}
+                            onChange={(e) => handleUpdatePhotoSheet({ ...photoSheet, inspectionDate: e.target.value })}
+                            className="w-full bg-transparent p-0 text-xs border-0 focus:ring-1 focus:ring-slate-900 rounded print:border-none font-mono"
+                          />
+                        </td>
+                        <th className="bg-slate-100 p-2 border-r border-slate-900 text-center font-bold">점검·확인자</th>
+                        <td className="p-2">
+                          <input
+                            type="text"
+                            value={photoSheet.inspector || assessment.companyProfile.siteManager || '안전보건관리자'}
+                            onChange={(e) => handleUpdatePhotoSheet({ ...photoSheet, inspector: e.target.value })}
+                            placeholder="점검자 성명 입력"
                           className="w-full bg-transparent p-0 text-xs border-0 focus:ring-1 focus:ring-slate-900 rounded print:border-none font-semibold text-slate-800"
                         />
                       </td>
@@ -988,8 +1102,9 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
                 </div>
 
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
           {/* Legal Footnote Warning Disclaimer (Required by PRD constraints) */}
           <div className="mt-12 pt-6 border-t border-slate-300 text-[10px] leading-relaxed text-slate-400 font-sans print:text-slate-600" id="legal-disclaimer">

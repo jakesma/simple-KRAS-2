@@ -440,13 +440,13 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
               {/* Company Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">회사명 / 테넌트</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">현장명 (공사 현장명)</label>
                   <input
                     type="text"
                     value={profile.companyName}
                     onChange={(e) => handleProfileChange('companyName', e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-slate-900 focus:bg-white transition"
-                    placeholder="예: 주식회사 한국정밀금속"
+                    placeholder="예: OO신축공사 현장 (또는 (주)대한전설 OO현장)"
                     id="input-company-name"
                   />
                 </div>
@@ -494,7 +494,7 @@ export default function AssessmentForm({ assessment, onSave, onBack, onLogAudit 
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">안전인 / 실무책임자</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">작성자 (안전) / 실무책임자</label>
                   <input
                     type="text"
                     value={profile.siteManager}

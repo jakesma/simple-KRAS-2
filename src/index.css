@@ -35,50 +35,144 @@ body {
   background: #CBD5E1;
 }
 
-/* Print styles for title and approval table */
+/* Print styles for standard KRAS format and suppression of browser headers/footers */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
 @media print {
+  /* Suppress browser default header (title) and footer (URL, date, page) */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Printable sheet container margin simulation */
+  #printable-sheet {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 8mm 10mm !important;
+    box-sizing: border-box !important;
+  }
+
   /* Title header alignment and spacing */
   #sheet-title-header {
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-  }
-  
-  #sheet-title-header p:first-child {
-    margin-bottom: 4px;
-    font-size: 11px;
+    margin-bottom: 8px !important;
+    padding-bottom: 6px !important;
   }
   
   #sheet-title-header h1 {
-    font-size: 20px;
-    margin-bottom: 4px;
+    font-size: 19px !important;
+    margin-bottom: 3px !important;
+    letter-spacing: -0.5px;
   }
   
-  #sheet-title-header p:last-child {
-    font-size: 10px;
-    margin: 0;
+  #sheet-title-header p {
+    font-size: 9.5px !important;
+    margin: 0 !important;
   }
-  
-  /* Approval box table optimization */
+
+  /* Info & Approval meta block */
+  #sheet-meta-block {
+    margin-bottom: 8px !important;
+    gap: 12px !important;
+  }
+
+  #sheet-info-table-wrapper table {
+    font-size: 9.5px !important;
+  }
+
+  #sheet-info-table-wrapper table th,
+  #sheet-info-table-wrapper table td {
+    padding: 2.5px 4px !important;
+  }
+
+  /* Approval box table */
   #approval-box-wrapper table {
-    font-size: 9px;
+    font-size: 9px !important;
+    width: 220px !important;
   }
-  
+
   #approval-box-wrapper table th {
     white-space: nowrap;
-    padding: 2px 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 2px 4px !important;
+    font-size: 9px !important;
   }
-  
-  #approval-box-wrapper table tr:first-child {
-    height: auto;
-    min-height: 28px;
+
+  #approval-box-wrapper table tr.signature-row {
+    height: 52px !important;
+    min-height: 52px !important;
   }
-  
+
   #approval-box-wrapper table td {
-    padding: 2px 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 2px 4px !important;
     word-break: break-word;
+  }
+
+  /* Tables container */
+  #kras-scroll-container {
+    overflow: visible !important;
+  }
+
+  #kras-master-table {
+    min-width: 100% !important;
+    width: 100% !important;
+    font-size: 8.5px !important;
+    border-bottom: 2px solid #0f172a !important;
+  }
+
+  #kras-master-table th {
+    padding: 3px 2px !important;
+    font-size: 8.5px !important;
+  }
+
+  #kras-master-table td {
+    padding: 2.5px 3px !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Worker signature section */
+  #worker-signature-section {
+    margin-top: 6px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #worker-signature-table {
+    font-size: 9px !important;
+    border-bottom: 2px solid #0f172a !important;
+  }
+
+  #worker-signature-table th,
+  #worker-signature-table td {
+    padding: 2px 4px !important;
+  }
+
+  #worker-signature-table tr {
+    height: 24px !important;
+  }
+
+  /* Legal disclaimer */
+  #legal-disclaimer {
+    margin-top: 6px !important;
+    padding-top: 4px !important;
+    font-size: 8px !important;
+    line-height: 1.2 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Photo Sheet page break cleanly to page 2 */
+  #photo-sheet-section {
+    break-before: page !important;
+    page-break-before: always !important;
+    padding-top: 8mm !important;
+    margin-top: 0 !important;
   }
 }

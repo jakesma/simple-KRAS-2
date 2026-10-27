@@ -11,5 +11,6 @@ coverage/
 
 # OMC runtime state
 .omc/
+.bkit/
 
 .env*

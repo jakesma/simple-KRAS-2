@@ -128,11 +128,11 @@ export default function TbmMeetingForm({ assessment, onBack }: TbmMeetingFormPro
               />
             </label>
             <label className="text-xs font-bold text-slate-600">
-              사업장명
+              현장명
               <input
                 value={assessment.companyProfile.companyName}
                 readOnly
-                placeholder="회사 프로필에서 사업장명을 입력하세요"
+                placeholder="현장명을 입력하세요"
                 className="mt-1.5 w-full border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900"
               />
             </label>

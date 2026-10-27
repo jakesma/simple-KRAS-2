@@ -199,7 +199,7 @@ export default function AssessmentList({
                   <h3 className="text-base font-bold text-slate-950 truncate">{a.title}</h3>
                   
                   <div className="flex items-center gap-4 text-[11px] text-slate-400 flex-wrap">
-                    <span>회사: <strong className="text-slate-600 font-medium">{a.companyProfile.companyName}</strong></span>
+                    <span>현장명: <strong className="text-slate-600 font-medium">{a.companyProfile.companyName || '미지정'}</strong></span>
                     <span>작업수: <strong className="text-slate-600 font-medium">{a.processes.length}개</strong></span>
                     <span>도출 요인: <strong className="text-slate-600 font-medium">{totalFactors}건</strong> (허용불가: <span className="text-red-500 font-bold">{unacceptableFactors}건</span>)</span>
                   </div>
