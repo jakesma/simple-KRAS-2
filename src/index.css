@@ -174,5 +174,66 @@ body {
     page-break-before: always !important;
     padding-top: 8mm !important;
     margin-top: 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Photo cards: two columns side by side on one portrait page */
+  #photo-cards-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    align-items: start !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #photo-cards-grid > div {
+    padding: 6px !important;
+    min-width: 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #photo-cards-grid > div > div {
+    margin: 0 !important;
+  }
+
+  #photo-cards-grid [class*="aspect-"] {
+    aspect-ratio: 3 / 4 !important;
+  }
+
+  #photo-cards-grid img {
+    max-height: 100% !important;
+  }
+
+  #photo-cards-grid textarea,
+  #photo-cards-grid input[type="text"] {
+    font-size: 9px !important;
+    resize: none !important;
+    width: 100% !important;
+  }
+
+  #photo-cards-grid textarea {
+    height: 60px !important;
+    overflow: hidden !important;
+  }
+
+  #photo-cards-grid label {
+    font-size: 8.5px !important;
+  }
+
+  #photo-sheet-info-table {
+    margin-bottom: 8px !important;
+    font-size: 9.5px !important;
+  }
+
+  #photo-sheet-info-table th,
+  #photo-sheet-info-table td {
+    padding: 3px 5px !important;
+  }
+
+  #photo-sheet-section input[type="date"] {
+    font-size: 9.5px !important;
   }
 }
