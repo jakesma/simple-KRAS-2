@@ -200,7 +200,7 @@ body {
   }
 
   #photo-cards-grid [class*="aspect-"] {
-    aspect-ratio: 3 / 4 !important;
+    aspect-ratio: 1 / 1 !important;
   }
 
   #photo-cards-grid img {
