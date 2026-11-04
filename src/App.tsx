@@ -11,7 +11,9 @@ import DocumentViewer from './components/DocumentViewer';
 import TbmMeetingForm from './components/TbmMeetingForm';
 import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
-import PaymentPage from './components/PaymentPage';
+import PlusPaymentPage from './components/PlusPaymentPage';
+import ProPaymentPage from './components/ProPaymentPage';
+import { PAID_PLANS, PaidPlanKey } from './config/plans';
 import CategorySelector from './components/CategorySelector';
 import { ConstructionSubCategory, createConstructionProcess, createConstructionProcesses, createElectricalStandardProcesses } from './data/constructionCategories';
 import { ShieldCheck, Layers, Info, LogOut, Zap } from 'lucide-react';
@@ -202,8 +204,7 @@ export default function App() {
   
   // Payment state
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState(35000); // Default: Pro plan monthly
-  const [paymentPlan, setPaymentPlan] = useState('Pro');
+  const [paymentPlan, setPaymentPlan] = useState<PaidPlanKey>('Plus');
   const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(() => {
     return typeof window !== 'undefined' ? localStorage.getItem('kras_subscription_plan') : null;
   });
@@ -459,9 +460,8 @@ export default function App() {
           setShowCategorySelector(true);
           setShowLanding(false);
         }}
-        onPaymentClick={(plan, amount) => {
+        onPaymentClick={(plan) => {
           setPaymentPlan(plan);
-          setPaymentAmount(amount);
           setShowPayment(true);
           setShowLanding(false);
         }}
@@ -510,12 +510,11 @@ export default function App() {
 
   // Show Payment Page if payment flow is initiated (supports both members and non-members)
   if (showPayment) {
+    const PlanPaymentPage = paymentPlan === 'Pro' ? ProPaymentPage : PlusPaymentPage;
     return (
-      <PaymentPage
-        amount={paymentAmount}
-        description={`SIMPLE KRAS ${paymentPlan} 플랜 구독료`}
+      <PlanPaymentPage
         onSuccess={(result) => {
-          console.log('결제 완료:', paymentPlan, paymentAmount, result);
+          console.log('결제 완료:', paymentPlan, PAID_PLANS[paymentPlan].amount, result);
           // 비회원 결제 시 비회원 모드 자동 활성화하여 즉시 플랫폼 이용 가능하게 설정
           if (!authUser) {
             localStorage.setItem('kras_construction_guest_mode', 'true');
@@ -617,18 +616,37 @@ export default function App() {
                 <span>PRO 회원 이용 중</span>
               </span>
             ) : (
-              <button
-                onClick={() => {
-                  setPaymentPlan('Pro');
-                  setPaymentAmount(380000);
-                  setShowPayment(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-sm transition cursor-pointer"
-                title="PRO 플랜 구매 (비회원/회원 모두 결제 가능)"
-              >
-                <Zap size={14} className="fill-current text-amber-300" />
-                <span>PRO 플랜 구매</span>
-              </button>
+              <>
+                {subscriptionPlan === 'Plus' ? (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/40 shadow-sm">
+                    <Zap size={14} className="fill-current text-emerald-400" />
+                    <span>PLUS 회원 이용 중</span>
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setPaymentPlan('Plus');
+                      setShowPayment(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-sm transition cursor-pointer"
+                    title="PLUS 플랜 구매 (월 35,000원)"
+                  >
+                    <Zap size={14} className="fill-current text-amber-300" />
+                    <span>PLUS 구매</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setPaymentPlan('Pro');
+                    setShowPayment(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-sm transition cursor-pointer"
+                  title="PRO 플랜 구매 (연 380,000원)"
+                >
+                  <Zap size={14} className="fill-current text-amber-300" />
+                  <span>{subscriptionPlan === 'Plus' ? 'PRO 업그레이드' : 'PRO 구매'}</span>
+                </button>
+              </>
             )}
           </div>
 

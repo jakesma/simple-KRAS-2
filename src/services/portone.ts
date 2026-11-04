@@ -24,6 +24,8 @@ export interface PaymentRequestParams {
   payMethod: KgInicisPayMethod;
   customer: CustomerInfo;
   customData?: Record<string, unknown>;
+  /** 서비스 제공기간(예: '1m', '1y') — KG이니시스 장기 서비스 필수 표기 */
+  offerPeriodInterval?: string;
 }
 
 export interface PaymentSuccessResult {
@@ -50,15 +52,14 @@ const STORAGE_STORE_ID_KEY = 'simple_kras_portone_store_id';
 const STORAGE_CHANNEL_KEY = 'simple_kras_portone_channel_key';
 
 export function getPortOneConfig(): { storeId: string; channelKey: string } {
-  const envStoreId = (import.meta.env.VITE_PORTONE_STORE_ID || '').trim();
-  const envChannelKey = (import.meta.env.VITE_PORTONE_CHANNEL_KEY || '').trim();
+  const envStoreId = (import.meta.env?.VITE_PORTONE_STORE_ID || '').trim();
+  const envChannelKey = (import.meta.env?.VITE_PORTONE_CHANNEL_KEY || '').trim();
 
-  const localStoreId = (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_STORE_ID_KEY) || '' : '').trim();
-  const localChannelKey = (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_CHANNEL_KEY) || '' : '').trim();
+  const read = (k: string) => (typeof window !== 'undefined' ? localStorage.getItem(k) || '' : '').trim();
 
   return {
-    storeId: localStoreId || envStoreId,
-    channelKey: localChannelKey || envChannelKey,
+    storeId: read(STORAGE_STORE_ID_KEY) || envStoreId,
+    channelKey: read(STORAGE_CHANNEL_KEY) || envChannelKey,
   };
 }
 
@@ -75,7 +76,7 @@ export function isPortOneConfigured(): boolean {
 }
 
 /**
- * KG이니시스 결제창 호출 함수
+ * KG이니시스 일반결제창 호출 함수
  */
 export async function requestKgInicisPayment(
   params: PaymentRequestParams
@@ -99,8 +100,10 @@ export async function requestKgInicisPayment(
       paymentId: uniquePaymentId,
       orderName: params.orderName,
       totalAmount: params.amount,
-      currency: 'CURRENCY_KRW',
+      currency: 'KRW',
       payMethod: params.payMethod,
+      // 비실물(디지털) 장기 서비스
+      productType: 'DIGITAL',
       customer: {
         fullName: params.customer.fullName || '고객',
         phoneNumber: params.customer.phoneNumber || '010-0000-0000',
@@ -109,13 +112,32 @@ export async function requestKgInicisPayment(
       redirectUrl: `${window.location.origin}/payment/complete`,
     };
 
+    // 서비스 제공기간 (KG이니시스 장기 서비스 필수)
+    if (params.offerPeriodInterval) {
+      paymentPayload.offerPeriod = { interval: params.offerPeriodInterval };
+    }
+
+    // KG이니시스 심사 조건: 비실물 장기 서비스는 BC카드 할부 최대 3개월 / 타 카드사 최대 6개월.
+    // 카드사별 개월 수를 나눌 수 없으므로 두 조건을 모두 만족하는 최대 3개월로 제한합니다.
+    if (params.payMethod === 'CARD') {
+      paymentPayload.card = {
+        installment: { monthOption: { availableMonthList: [2, 3] } },
+      };
+    }
+
     // KG이니시스 채널 키가 지정되어 있는 경우 전달
     if (channelKey) {
       paymentPayload.channelKey = channelKey;
     }
 
+    if (params.payMethod === 'VIRTUAL_ACCOUNT') {
+      paymentPayload.virtualAccount = {
+        accountExpiry: { validHours: 24 },
+      };
+    }
+
     if (params.customData) {
-      paymentPayload.customData = JSON.stringify(params.customData);
+      paymentPayload.customData = params.customData;
     }
 
     const response = await PortOne.requestPayment(paymentPayload);
@@ -149,3 +171,4 @@ export async function requestKgInicisPayment(
     };
   }
 }
+

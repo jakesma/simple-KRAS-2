@@ -20,6 +20,7 @@ import {
   Receipt
 } from 'lucide-react';
 import { getCurrentUser } from '../config/auth';
+import { PAID_PLANS, PaidPlanKey } from '../config/plans';
 import { 
   requestKgInicisPayment, 
   getPortOneConfig, 
@@ -31,20 +32,25 @@ import {
 } from '../services/portone';
 
 interface PaymentPageProps {
-  amount: number;
+  amount?: number;
   description?: string;
+  planKey?: PaidPlanKey; // 지정 시 플랜 전용 결제 화면(금액/주문명/기능/테마)
   onSuccess?: (result: PaymentSuccessResult) => void;
   onCancel?: () => void;
   onComplete?: () => void;
 }
 
 export default function PaymentPage({ 
-  amount, 
-  description = 'SIMPLE KRAS 위험성평가 플랫폼 구독',
+  amount: amountProp, 
+  description: descriptionProp,
+  planKey,
   onSuccess,
   onCancel,
   onComplete 
 }: PaymentPageProps) {
+  const plan = planKey ? PAID_PLANS[planKey] : null;
+  const amount = plan?.amount ?? amountProp ?? 0;
+  const description = plan?.orderName ?? descriptionProp ?? 'SIMPLE KRAS 위험성평가 플랫폼 구독';
   const [selectedMethod, setSelectedMethod] = useState<KgInicisPayMethod>('CARD');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -61,6 +67,7 @@ export default function PaymentPage({
   const [storeIdInput, setStoreIdInput] = useState('');
   const [channelKeyInput, setChannelKeyInput] = useState('');
   const [configured, setConfigured] = useState(false);
+  const [agreedPolicy, setAgreedPolicy] = useState(false);
 
   // 초기 사용자 정보 및 포트원 설정 로드
   useEffect(() => {
@@ -86,7 +93,7 @@ export default function PaymentPage({
     {
       id: 'CARD',
       name: '신용 / 체크카드',
-      sub: '국내 모든 카드사, 앱카드, 무이자 할부',
+      sub: '국내 모든 카드사, 앱카드 (비씨카드 할부 최대 3개월 / 외 카드사 최대 6개월)',
       icon: CreditCard,
       badge: '가장 많이 이용'
     },
@@ -133,10 +140,21 @@ export default function PaymentPage({
       return;
     }
 
+    if (plan && !agreedPolicy) {
+      setErrorMessage('서비스 제공기간 및 환불규정을 확인하고 동의해 주세요.');
+      return;
+    }
+
     setErrorMessage(null);
     setIsProcessing(true);
 
     try {
+      const customerInfo = {
+        fullName: customerName.trim(),
+        phoneNumber: customerPhone.trim(),
+        email: customerEmail.trim() || undefined,
+      };
+
       const result = await requestKgInicisPayment({
         orderName: description,
         amount,
@@ -146,9 +164,11 @@ export default function PaymentPage({
           phoneNumber: customerPhone.trim(),
           email: customerEmail.trim() || undefined,
         },
+        offerPeriodInterval: plan?.offerPeriodInterval,
         customData: {
           companyName: companyName.trim() || undefined,
           service: 'SIMPLE-KRAS-CONSTRUCTION',
+          plan: planKey,
           isGuest: !getCurrentUser(),
         }
       });
@@ -343,11 +363,11 @@ export default function PaymentPage({
         </div>
 
         {/* Order Summary Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+        <div className={`bg-white rounded-2xl shadow-sm border p-6 mb-6 ${plan ? plan.theme.card : 'border-slate-200'}`}>
           <div className="flex justify-between items-start mb-4">
             <div>
-              <span className="inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 mb-2">
-                KG INICIS PG 안전결제
+              <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold border mb-2 ${plan ? plan.theme.badge : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                {plan ? `${plan.label} 플랜 · ${plan.period}` : 'KG INICIS PG 안전결제'}
               </span>
               <h1 className="text-xl font-black text-slate-900">
                 {description}
@@ -361,6 +381,23 @@ export default function PaymentPage({
               <span className="text-[11px] text-slate-400 block mt-0.5">(VAT 포함)</span>
             </div>
           </div>
+          {plan && (
+            <div className="pt-4 border-t border-slate-100">
+              <p className="text-xs text-slate-500 mb-3">{plan.tagline}</p>
+              <p className="text-xs text-slate-700 mb-3 p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                <span className="font-bold text-slate-900">서비스 제공기간 </span>
+                {plan.servicePeriod}
+              </p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-center gap-2 text-xs text-slate-700">
+                    <CheckCircle2 size={14} className={plan.theme.check} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Customer Information Form */}
@@ -498,6 +535,40 @@ export default function PaymentPage({
           </div>
         </div>
 
+        {/* 환불규정 / 서비스 제공기간 동의 (일반결제·정기결제 별도 규정) */}
+        {plan && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+            <h2 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
+              <Receipt size={18} className="text-slate-600" />
+              일반결제 환불규정
+            </h2>
+            <p className="text-[11px] text-slate-500 mb-3">
+              1회 결제 후 서비스 제공기간 동안 이용하는 상품이며, 자동 갱신(정기결제)되지 않습니다.
+            </p>
+            <ul className="space-y-1.5 text-xs text-slate-700 list-disc pl-4 mb-3">
+              {plan.refundPolicy.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-600 mb-4 space-y-1">
+              <p className="font-bold text-slate-800">카드사 할부 및 정기결제 환불규정 안내</p>
+              <p>• 비실물 장기 서비스 제공 기준에 따라 신용카드 할부는 <strong>비씨카드 최대 3개월 / 그 외 카드사 최대 6개월</strong>까지 이용 가능합니다.</p>
+              <p>• 현재 판매 상품은 모두 1회성 일반결제 상품(자동결제 없음)입니다. (정기결제 상품 운영 시: 신용카드 전용, 결제 후 7일 이내 미사용 시 100% 환불, 중도 해지 시 차기 결제일부터 자동결제 즉시 중단 및 당월 잔여기간 이용 보장)</p>
+            </div>
+            <label className="flex items-start gap-2 text-xs font-semibold text-slate-800 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedPolicy}
+                onChange={(e) => setAgreedPolicy(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                서비스 제공기간 및 환불규정을 확인하였으며 이에 동의합니다. <span className="text-rose-500">(필수)</span>
+              </span>
+            </label>
+          </div>
+        )}
+
         {/* Error message */}
         {errorMessage && (
           <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl mb-6 flex items-start gap-3 text-rose-800 text-xs leading-relaxed">
@@ -519,7 +590,7 @@ export default function PaymentPage({
           <button
             onClick={handleExecutePayment}
             disabled={isProcessing}
-            className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.99] text-white rounded-xl font-bold text-base transition shadow-lg shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+            className={`w-full py-4 px-6 bg-gradient-to-r ${plan ? plan.theme.button : 'from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/20'} active:scale-[0.99] text-white rounded-xl font-bold text-base transition shadow-lg disabled:opacity-50 flex items-center justify-center gap-2`}
           >
             {isProcessing ? (
               <>
@@ -607,6 +678,7 @@ export default function PaymentPage({
                 />
                 <p className="text-[11px] text-slate-400 mt-1">포트원 콘솔 &gt; 결제 연동 &gt; 채널 관리 (KG이니시스)에서 확인</p>
               </div>
+
             </div>
 
             <div className="flex gap-2 mb-3">

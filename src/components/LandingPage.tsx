@@ -7,7 +7,7 @@ import RefundPolicy from './RefundPolicy';
 interface LandingPageProps {
   onStartClick: () => void;
   onCategoryClick: () => void;
-  onPaymentClick?: (plan: string, amount: number) => void;
+  onPaymentClick?: (plan: 'Plus' | 'Pro', amount: number) => void;
 }
 
 export default function LandingPage({ onStartClick, onCategoryClick, onPaymentClick }: LandingPageProps) {
@@ -352,11 +352,11 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
             </span>
             <h2 className="text-4xl font-bold text-gray-900 mt-4">합리적인 요금제</h2>
             <p className="text-lg text-gray-600 mt-4">
-              무료로 시작하고, 필요할 때 업그레이드하세요. 언제든 취소 가능합니다.
+              무료로 시작하고, 필요할 때 기간제 이용권(1회 일반결제 · 자동결제 없음)으로 업그레이드하세요.
             </p>
             <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              회원가입 없이 비회원도 간편 결제 및 즉시 이용 가능
+              회원가입 없이 비회원도 간편 결제 및 즉시 이용 가능 (단건 일반결제)
             </div>
           </div>
 
@@ -365,8 +365,9 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
               {
                 name: 'FREE',
                 price: '₩0',
-                period: '/월',
-                subtext: '',
+                period: '/ 무료',
+                servicePeriod: '서비스 제공기간: 기한 제한 없음 (월 5회 무료)',
+                subtext: '신용카드 등록 불필요',
                 cta: '무료로 시작하기',
                 features: [
                   { text: '위험성평가 월 5회', included: true },
@@ -380,9 +381,10 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
               {
                 name: 'PLUS',
                 price: '₩35,000',
-                period: '/월',
-                subtext: '',
-                cta: 'PLUS 시작하기',
+                period: '/ 1개월권',
+                servicePeriod: '서비스 제공기간: 결제일로부터 1개월(30일)',
+                subtext: '1회 일반결제 (자동결제·정기결제 없음)',
+                cta: 'PLUS 1개월권 결제하기',
                 highlight: true,
                 features: [
                   { text: '위험성평가 무제한', included: true },
@@ -396,10 +398,11 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
               {
                 name: 'PRO',
                 price: '₩380,000',
-                period: '/년',
+                period: '/ 12개월권',
                 originalPrice: '₩420,000',
-                subtext: '연 요금 약 10% 할인',
-                cta: 'PRO 시작하기',
+                servicePeriod: '서비스 제공기간: 결제일로부터 12개월(1년)',
+                subtext: '1회 일반결제 (약 10% 할인 · 자동결제 없음)',
+                cta: 'PRO 12개월권 결제하기',
                 highlight: true,
                 features: [
                   { text: 'PLUS 모든 기능', included: true },
@@ -430,8 +433,13 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
                       <span className="text-gray-600">{plan.period}</span>
                     </div>
                   </div>
+                  {plan.servicePeriod && (
+                    <p className="text-xs font-semibold text-slate-700 mt-3 px-2.5 py-1.5 bg-slate-50 rounded border border-slate-200">
+                      {plan.servicePeriod}
+                    </p>
+                  )}
                   {plan.subtext && (
-                    <p className={`text-sm mt-2 ${plan.highlight ? 'text-emerald-600 font-semibold' : 'text-gray-600'}`}>{plan.subtext}</p>
+                    <p className={`text-xs mt-1.5 ${plan.highlight ? 'text-emerald-600 font-semibold' : 'text-gray-600'}`}>{plan.subtext}</p>
                   )}
                   <button
                     onClick={() => {
@@ -472,6 +480,25 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* 결제·서비스 제공기간·할부·환불규정 안내 */}
+          <div className="mt-8 bg-slate-50 rounded-lg p-6 border border-slate-200 text-xs text-slate-700 space-y-2">
+            <div className="font-bold text-sm text-slate-900">결제 및 서비스 이용 안내 (KG이니시스 전자결제)</div>
+            <p>• <span className="font-semibold">결제 방식:</span> PLUS(1개월 이용권, ₩35,000)와 PRO(12개월 이용권, ₩380,000)는 모두 <span className="font-semibold text-emerald-700">단발성 1회 일반결제</span> 상품이며, 매월 자동 결제(정기결제)되지 않습니다.</p>
+            <p>• <span className="font-semibold">서비스 제공기간:</span> PLUS 플랜은 결제일로부터 1개월(30일), PRO 플랜은 결제일로부터 12개월(1년) 동안 제공되며 만료 시 자동 종료됩니다.</p>
+            <p>• <span className="font-semibold">카드사 할부 안내:</span> 비실물 장기 서비스 제공 기준에 따라 <span className="font-semibold">비씨카드 할부는 최대 3개월까지, 그 외 카드사 할부는 최대 6개월까지</span> 이용 가능합니다.</p>
+            <p>
+              • <span className="font-semibold">환불규정:</span> 결제일로부터 7일 이내 미사용 시 100% 전액 환불되며, 상세 기준은{' '}
+              <button
+                type="button"
+                onClick={() => setIsRefundPolicyOpen(true)}
+                className="underline font-bold text-emerald-700 hover:text-emerald-800"
+              >
+                환불정책 및 취소규정 (일반결제·정기결제)
+              </button>
+              에서 확인하실 수 있습니다.
+            </p>
           </div>
 
           {/* Enterprise */}
@@ -541,8 +568,8 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
               <h4 className="font-semibold mb-4">요금제</h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#pricing" className="hover:text-white">무료 플랜</a></li>
-                <li><a href="#pricing" className="hover:text-white">Pro 플랜</a></li>
-                <li><a href="#pricing" className="hover:text-white">Team 플랜</a></li>
+                <li><a href="#pricing" className="hover:text-white">PLUS 플랜 (1개월권)</a></li>
+                <li><a href="#pricing" className="hover:text-white">PRO 플랜 (12개월권)</a></li>
               </ul>
             </div>
             <div>

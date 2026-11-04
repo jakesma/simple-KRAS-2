@@ -55,7 +55,7 @@ export default function TermsOfService({ isOpen, onClose }: TermsOfServiceProps)
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-3">제3조 서비스 이용의 신청 및 승인</h3>
             <div className="space-y-2 ml-4 text-gray-600">
-              <p>① 이용자는 회사의 회원가입 절차를 거쳐 계정을 개설할 수 있습니다.</p>
+              <p>① 이용자는 회사의 회원가입 절차를 거쳐 계정을 개설하거나 비회원 결제를 통해 서비스를 이용할 수 있습니다.</p>
               <p>② 이용자는 정확한 정보를 제공해야 하며, 거짓이나 부정확한 정보로 인한 책임은 이용자가 집니다.</p>
               <p>③ 회사는 다음의 경우 서비스 이용을 거절할 수 있습니다:</p>
               <ul className="list-disc list-inside space-y-1 text-gray-600 mt-2">
@@ -97,22 +97,22 @@ export default function TermsOfService({ isOpen, onClose }: TermsOfServiceProps)
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-3">제6조 이용 요금</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-3">제6조 이용 요금 및 서비스 제공기간</h3>
             <div className="space-y-2 ml-4 text-gray-600">
               <p>① FREE 플랜(월 5회): 무료</p>
-              <p>② PLUS 플랜(무제한): ₩35,000/월</p>
-              <p>③ PRO 플랜(무제한): ₩380,000/년</p>
-              <p>④ 요금은 선택한 결제 수단으로 자동 청구됩니다.</p>
-              <p>⑤ 결제 일시는 선택한 결제 수단에 따라 달라질 수 있습니다.</p>
+              <p>② PLUS 플랜(1개월 이용권): ₩35,000(VAT 포함) · 서비스 제공기간: 결제일로부터 1개월(30일) · 1회 일반결제</p>
+              <p>③ PRO 플랜(12개월 이용권): ₩380,000(VAT 포함) · 서비스 제공기간: 결제일로부터 12개월(1년) · 1회 일반결제</p>
+              <p>④ 모든 유료 이용권은 단발성 일반결제(1회 결제) 상품으로, 제공기간 만료 시 자동 결제(정기결제)되지 않으며 계속 이용을 원할 경우 재결제하여 이용할 수 있습니다.</p>
+              <p>⑤ 비실물 장기 서비스 제공 기준에 따라 신용카드 할부 이용 시 비씨카드는 최대 3개월, 그 외 카드사는 최대 6개월까지 할부 이용이 가능합니다.</p>
             </div>
           </div>
 
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-3">제7조 환불 및 취소</h3>
             <div className="space-y-2 ml-4 text-gray-600">
-              <p>① 환불 및 취소는 별도의 "환불정책"을 따릅니다.</p>
-              <p>② 구독 취소는 마이페이지에서 언제든지 가능합니다.</p>
-              <p>③ 취소 후 다음 청구일에 구독이 해지됩니다.</p>
+              <p>① 환불 및 결제 취소는 별도의 "환불정책"에 명시된 일반결제 및 정기결제 환불 규정을 따릅니다.</p>
+              <p>② 결제일로부터 7일 이내이며 서비스 이용(위험성평가 생성·출력·다운로드 등) 내역이 없는 경우 전액 환불이 가능합니다.</p>
+              <p>③ 상세 환불 산정 기준 및 신청 절차는 홈페이지 하단 "환불정책" 및 결제 화면에서 확인할 수 있습니다.</p>
             </div>
           </div>
 
@@ -128,7 +128,7 @@ export default function TermsOfService({ isOpen, onClose }: TermsOfServiceProps)
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-3">제9조 손해배상</h3>
             <div className="space-y-2 ml-4 text-gray-600">
-              <p>① 회사의 귀책사유로 인한 손해배상은 이용자가 결제한 해당 월(또는 년)의 요금을 한도로 합니다.</p>
+              <p>① 회사의 귀책사유로 인한 손해배상은 이용자가 결제한 해당 이용권 요금을 한도로 합니다.</p>
               <p>② 회사는 제8조의 무보증 규정에 따라 발생하는 손해에 대해 배상하지 않습니다.</p>
               <p>③ 이용자의 귀책사유로 인한 손해는 이용자가 배상합니다.</p>
             </div>
@@ -147,7 +147,7 @@ export default function TermsOfService({ isOpen, onClose }: TermsOfServiceProps)
             <h3 className="text-lg font-bold text-gray-900 mb-3">제11조 지적재산권</h3>
             <div className="space-y-2 ml-4 text-gray-600">
               <p>① 서비스에 포함된 모든 저작권, 특허권, 상표권 등은 회사 또는 라이센스 제공자에게 귀속됩니다.</p>
-              <p>② 이용자는 개인 목적의 이용 범위 내에서만 서비스를 이용할 수 있습니다.</p>
+              <p>② 이용자는 개인 및 소속 사업장 목적의 이용 범위 내에서만 서비스를 이용할 수 있습니다.</p>
               <p>③ 서비스의 내용을 무단 복제, 배포, 전송, 전개 등은 할 수 없습니다.</p>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function TermsOfService({ isOpen, onClose }: TermsOfServiceProps)
             <div className="space-y-2 ml-4 text-gray-600">
               <p>① 회사는 이용자가 본 약관을 위반한 경우 서비스 이용을 제한하거나 중단할 수 있습니다.</p>
               <p>② 서비스 중단 시 사전 통지를 할 수 있습니다.</p>
-              <p>③ 이용자는 마이페이지에서 서비스 이용을 중단할 수 있습니다.</p>
+              <p>③ 이용자는 언제든지 서비스 이용을 중단할 수 있습니다.</p>
             </div>
           </div>
 
