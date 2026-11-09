@@ -66,7 +66,7 @@ export default function PaymentPage({
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [storeIdInput, setStoreIdInput] = useState('');
   const [channelKeyInput, setChannelKeyInput] = useState('');
-  const [configured, setConfigured] = useState(false);
+  const [configured, setConfigured] = useState(true);
   const [agreedPolicy, setAgreedPolicy] = useState(false);
 
   // 초기 사용자 정보 및 포트원 설정 로드
@@ -175,10 +175,7 @@ export default function PaymentPage({
       } else {
         const failure = result as PaymentFailureResult;
         setErrorMessage(failure.message || '결제가 완료되지 않았습니다.');
-        // 포트원 미연동 상태일 때 모달 유도
-        if (failure.code === 'CONFIG_MISSING') {
-          setShowConfigModal(true);
-        }
+        // 영구 연동 적용됨
       }
     } catch (err: any) {
       setErrorMessage(err.message || '결제 통신 중 오류가 발생했습니다.');
@@ -305,19 +302,11 @@ export default function PaymentPage({
             이전으로
           </button>
           
-          <button
-            onClick={() => setShowConfigModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition shadow-sm"
-            title="포트원 PG 연동 설정"
-          >
-            <Settings size={14} />
-            <span>포트원 PG 연동 정보</span>
-            {configured ? (
-              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-1"></span>
-            ) : (
-              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block ml-1"></span>
-            )}
-          </button>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 shadow-xs">
+            <ShieldCheck size={14} className="text-emerald-600" />
+            <span>KG이니시스 안전결제 연동됨</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-0.5"></span>
+          </div>
         </div>
 
         {/* 연동 준비 상태 안내 배너 */}

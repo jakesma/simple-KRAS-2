@@ -47,35 +47,29 @@ export interface PaymentFailureResult {
 
 export type PaymentExecutionResult = PaymentSuccessResult | PaymentFailureResult;
 
-// 포트원 환경변수 또는 브라우저 로컬스토리지 저장 키 로드
-const STORAGE_STORE_ID_KEY = 'simple_kras_portone_store_id';
-const STORAGE_CHANNEL_KEY = 'simple_kras_portone_channel_key';
-
-const DEFAULT_PORTONE_STORE_ID = 'store-6926905d-7ea7-4062-8309-61df1411c29b';
-const DEFAULT_PORTONE_CHANNEL_KEY = 'channel-key-c65d82b3-22cc-4db4-9bce-3a8266440159';
+// 고정된 포트원 Store ID 및 KG이니시스 Channel Key (영구 적용)
+export const DEFAULT_PORTONE_STORE_ID = 'store-6926905d-7ea7-4062-8309-61df1411c29b';
+export const DEFAULT_PORTONE_CHANNEL_KEY = 'channel-key-c65d82b3-22cc-4db4-9bce-3a8266440159';
 
 export function getPortOneConfig(): { storeId: string; channelKey: string } {
-  const envStoreId = (import.meta.env?.VITE_PORTONE_STORE_ID || DEFAULT_PORTONE_STORE_ID).trim();
-  const envChannelKey = (import.meta.env?.VITE_PORTONE_CHANNEL_KEY || DEFAULT_PORTONE_CHANNEL_KEY).trim();
+  const envStoreId = (import.meta.env?.VITE_PORTONE_STORE_ID || '').trim();
+  const envChannelKey = (import.meta.env?.VITE_PORTONE_CHANNEL_KEY || '').trim();
 
-  const read = (k: string) => (typeof window !== 'undefined' ? localStorage.getItem(k) || '' : '').trim();
+  const validEnvStore = envStoreId && !envStoreId.includes('xxxxxxxx') ? envStoreId : '';
+  const validEnvChannel = envChannelKey && !envChannelKey.includes('xxxxxxxx') ? envChannelKey : '';
 
   return {
-    storeId: read(STORAGE_STORE_ID_KEY) || envStoreId,
-    channelKey: read(STORAGE_CHANNEL_KEY) || envChannelKey,
+    storeId: validEnvStore || DEFAULT_PORTONE_STORE_ID,
+    channelKey: validEnvChannel || DEFAULT_PORTONE_CHANNEL_KEY,
   };
 }
 
-export function savePortOneConfig(storeId: string, channelKey: string) {
-  if (typeof window !== 'undefined') {
-    if (storeId) localStorage.setItem(STORAGE_STORE_ID_KEY, storeId.trim());
-    if (channelKey) localStorage.setItem(STORAGE_CHANNEL_KEY, channelKey.trim());
-  }
+export function savePortOneConfig(_storeId: string, _channelKey: string) {
+  // 영구 키가 코드에 내장되어 별도 저장이 필요하지 않습니다.
 }
 
 export function isPortOneConfigured(): boolean {
-  const { storeId } = getPortOneConfig();
-  return Boolean(storeId && storeId !== 'store-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx');
+  return true;
 }
 
 /**
