@@ -100,13 +100,18 @@ export async function requestKgInicisPayment(
       : 'guest@simplekrascon.xyz';
     const safeName = (params.customer.fullName || '고객').replace(/[<>'"&%;]/g, '').trim() || '고객';
 
+    // KG이니시스 표준결제창(INIStdPay)은 CARD(신용/체크카드) 창 내에 카카오페이·네이버페이·토스페이·페이코 등
+    // 간편결제가 기본 통합 제공됩니다. PortOne V2에서 EASY_PAY 단독 호출 시 easyPayProvider 필수 에러가 발생하므로
+    // EASY_PAY 선택 시에도 KG이니시스 통합 카드/간편결제창(CARD)이 호출되도록 매핑합니다.
+    const effectivePayMethod = params.payMethod === 'EASY_PAY' ? 'CARD' : params.payMethod;
+
     const paymentPayload: any = {
       storeId,
       paymentId: uniquePaymentId,
       orderName: params.orderName,
       totalAmount: params.amount,
       currency: 'KRW',
-      payMethod: params.payMethod,
+      payMethod: effectivePayMethod,
       // 비실물(디지털) 장기 서비스
       productType: 'DIGITAL',
       customer: {
@@ -114,7 +119,7 @@ export async function requestKgInicisPayment(
         phoneNumber: safePhone,
         email: safeEmail,
       },
-      redirectUrl: `${window.location.origin}/payment/complete`,
+      redirectUrl: `${window.location.origin}/`,
     };
 
     // 서비스 제공기간 (KG이니시스 장기 서비스 필수)
@@ -124,7 +129,7 @@ export async function requestKgInicisPayment(
 
     // KG이니시스 심사 조건: 비실물 장기 서비스는 BC카드 할부 최대 3개월 / 타 카드사 최대 6개월.
     // 카드사별 개월 수를 나눌 수 없으므로 두 조건을 모두 만족하는 최대 3개월로 제한합니다.
-    if (params.payMethod === 'CARD') {
+    if (effectivePayMethod === 'CARD') {
       paymentPayload.card = {
         installment: { monthOption: { availableMonthList: [2, 3] } },
       };
