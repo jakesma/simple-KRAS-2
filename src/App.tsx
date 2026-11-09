@@ -13,10 +13,11 @@ import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
 import PlusPaymentPage from './components/PlusPaymentPage';
 import ProPaymentPage from './components/ProPaymentPage';
+import ProWorkspaceHub, { ProHubTab, CompanyTemplateItem } from './components/ProWorkspaceHub';
 import { PAID_PLANS, PaidPlanKey } from './config/plans';
 import CategorySelector from './components/CategorySelector';
 import { ConstructionSubCategory, createConstructionProcess, createConstructionProcesses, createElectricalStandardProcesses } from './data/constructionCategories';
-import { ShieldCheck, Layers, Info, LogOut, Zap } from 'lucide-react';
+import { ShieldCheck, Layers, Info, LogOut, Zap, BarChart3, Building2, BookmarkCheck, Users, Headphones } from 'lucide-react';
 import { onAuthStateChanged, getCurrentUser, logOut, AuthUser } from './config/auth';
 import { getUserAssessments, saveAssessment, deleteAssessment, migrateLocalStorageToFirestore } from './config/firestore';
 
@@ -203,7 +204,8 @@ export default function App() {
   const [isGuestMode, setIsGuestMode] = useState(() => localStorage.getItem('kras_construction_guest_mode') === 'true');
 
   // Dashboard state
-  const [activeTab, setActiveTab] = useState<'assessments'>('assessments');
+  const [activeTab, setActiveTab] = useState<'assessments' | 'pro-hub'>('assessments');
+  const [proHubTab, setProHubTab] = useState<ProHubTab>('admin');
   const [assessments, setAssessments] = useState<RiskAssessment[]>([]);
   const [editingAssessmentId, setEditingAssessmentId] = useState<string | null>(null);
   const [viewingAssessmentId, setViewingAssessmentId] = useState<string | null>(null);
@@ -620,14 +622,14 @@ export default function App() {
           </div>
 
           {/* Nav Tab Swappers */}
-          <div className="flex items-center gap-1 bg-slate-900/40 p-1 rounded-xl" id="header-tab-group">
+          <div className="flex items-center gap-1 bg-slate-900/40 p-1 rounded-xl overflow-x-auto" id="header-tab-group">
             <button
               onClick={() => {
                 setActiveTab('assessments');
                 setEditingAssessmentId(null);
                 setViewingAssessmentId(null);
               }}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                 activeTab === 'assessments' && !editingAssessmentId && !viewingAssessmentId
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -637,7 +639,35 @@ export default function App() {
               <Layers size={14} />
               위험성평가 관리
             </button>
-            {/* PRD tab removed per user request */}
+            {([
+              { id: 'admin' as ProHubTab, label: '관리자 대시보드', icon: BarChart3 },
+              { id: 'sites' as ProHubTab, label: '다수 현장 관리', icon: Building2 },
+              { id: 'templates' as ProHubTab, label: '회사 템플릿', icon: BookmarkCheck },
+              { id: 'team' as ProHubTab, label: '팀원 공유(5명)', icon: Users },
+              { id: 'support' as ProHubTab, label: '우선 고객지원', icon: Headphones },
+            ]).map((item) => {
+              const Icon = item.icon;
+              const isCurrent = activeTab === 'pro-hub' && proHubTab === item.id && !editingAssessmentId && !viewingAssessmentId;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab('pro-hub');
+                    setProHubTab(item.id);
+                    setEditingAssessmentId(null);
+                    setViewingAssessmentId(null);
+                  }}
+                  className={`hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                    isCurrent
+                      ? 'bg-amber-500 text-slate-950 shadow-sm'
+                      : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon size={13} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Plan Upgrade / Purchase Button */}
@@ -726,6 +756,59 @@ export default function App() {
             onBack={() => setEditingAssessmentId(null)}
             onLogAudit={handleLogAudit}
           />
+        ) : activeTab === 'pro-hub' ? (
+          <ProWorkspaceHub
+            activeSubTab={proHubTab}
+            onChangeSubTab={(tab) => setProHubTab(tab)}
+            assessments={assessments}
+            subscriptionPlan={subscriptionPlan}
+            onUpgradePro={() => {
+              setPaymentPlan('Pro');
+              setShowPayment(true);
+            }}
+            onCreateAssessmentFromSite={(profile, siteTitle) => {
+              const newAssess: RiskAssessment = {
+                id: `assess_${Date.now()}`,
+                title: siteTitle,
+                assessmentType: 'regular',
+                createdAt: new Date().toISOString().split('T')[0],
+                updatedAt: new Date().toISOString().split('T')[0],
+                version: 1,
+                status: 'draft',
+                companyProfile: profile,
+                processes: createElectricalStandardProcesses(),
+              };
+              const nextList = [newAssess, ...assessments];
+              syncToStorage(nextList);
+              setActiveTab('assessments');
+              setEditingAssessmentId(newAssess.id);
+            }}
+            onCreateAssessmentFromTemplate={(template: CompanyTemplateItem) => {
+              const newAssess: RiskAssessment = {
+                id: `assess_${Date.now()}`,
+                title: `${template.name.replace('[사내표준] ', '')} (${new Date().toISOString().split('T')[0]})`,
+                assessmentType: 'regular',
+                createdAt: new Date().toISOString().split('T')[0],
+                updatedAt: new Date().toISOString().split('T')[0],
+                version: 1,
+                status: 'draft',
+                companyProfile: { ...DEFAULT_PROFILE },
+                processes: JSON.parse(JSON.stringify(template.processes)),
+              };
+              const nextList = [newAssess, ...assessments];
+              syncToStorage(nextList);
+              setActiveTab('assessments');
+              setViewingAssessmentId(newAssess.id);
+            }}
+            onSelectAssessment={(id) => {
+              setActiveTab('assessments');
+              handleSelect(id);
+            }}
+            onViewAssessmentDoc={(id) => {
+              setActiveTab('assessments');
+              handleViewDoc(id);
+            }}
+          />
         ) : (
           <AssessmentList
             assessments={assessments}
@@ -739,6 +822,11 @@ export default function App() {
             onViewDoc={handleViewDoc}
             onDuplicate={handleDuplicate}
             onDelete={handleDelete}
+            subscriptionPlan={subscriptionPlan}
+            onOpenProFeature={(tab) => {
+              setProHubTab(tab);
+              setActiveTab('pro-hub');
+            }}
           />
         )}
       </main>

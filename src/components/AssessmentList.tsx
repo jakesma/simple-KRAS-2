@@ -15,6 +15,8 @@ interface AssessmentListProps {
   onViewDoc: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
+  onOpenProFeature?: (tab: 'admin' | 'sites' | 'templates' | 'team' | 'support') => void;
+  subscriptionPlan?: string | null;
 }
 
 export default function AssessmentList({
@@ -24,7 +26,9 @@ export default function AssessmentList({
   onSelect,
   onViewDoc,
   onDuplicate,
-  onDelete
+  onDelete,
+  onOpenProFeature,
+  subscriptionPlan
 }: AssessmentListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -80,6 +84,27 @@ export default function AssessmentList({
             신규 위험성평가 생성
           </button>
         </div>
+
+        {/* PRO / PLUS 비즈니스 기능 바로가기 바 */}
+        {onOpenProFeature && (
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-xl p-4 text-white shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3" id="pro-features-quickbar">
+            <div className="flex items-center gap-2.5">
+              <span className="px-2.5 py-1 rounded-md bg-amber-400 text-slate-950 text-[11px] font-black shrink-0">
+                {subscriptionPlan === 'Pro' ? 'PRO 활성' : 'PRO 전용 모듈'}
+              </span>
+              <span className="text-xs font-bold text-slate-200">
+                PRO 비즈니스 통합 기능 (클릭 시 해당 관리 화면으로 즉시 이동합니다)
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={() => onOpenProFeature('admin')} className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition cursor-pointer">📊 관리자 대시보드</button>
+              <button onClick={() => onOpenProFeature('sites')} className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition cursor-pointer">🏗️ 다수 현장 관리</button>
+              <button onClick={() => onOpenProFeature('templates')} className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition cursor-pointer">📑 회사 템플릿 관리</button>
+              <button onClick={() => onOpenProFeature('team')} className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition cursor-pointer">👥 팀원 공유 (최대 5명)</button>
+              <button onClick={() => onOpenProFeature('support')} className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-xs font-bold text-amber-300 transition cursor-pointer">🎧 우선 고객 지원</button>
+            </div>
+          </div>
+        )}
 
         {/* Dynamic Metric Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="list-metrics">

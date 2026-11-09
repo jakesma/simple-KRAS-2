@@ -207,6 +207,51 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
     }, 1000);
   };
 
+  const [savedTplToast, setSavedTplToast] = useState(false);
+
+  const handleExportExcel = () => {
+    let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>';
+    html += '<h2>' + assessment.title + '</h2>';
+    html += '<p>현장/사업장명: ' + (assessment.companyProfile.companyName || '-') + ' | 현장소장/책임자: ' + (assessment.companyProfile.siteManager || '-') + ' | 작성일: ' + assessment.createdAt + '</p>';
+    html += '<table border="1" style="border-collapse:collapse;font-family:Malgun Gothic,sans-serif;font-size:11px;">';
+    html += '<tr style="background:#1e293b;color:#ffffff;font-weight:bold;"><th>공정명</th><th>세부 작업내용</th><th>유해·위험요인</th><th>관련 법적근거</th><th>현재 안전보건조치</th><th>가능성</th><th>중대성</th><th>위험성 점수</th><th>위험성 감소대책</th><th>개선후 점수</th><th>담당자</th></tr>';
+    assessment.processes.forEach((p) => {
+      if (p.hazards.length === 0) {
+        html += '<tr><td>' + p.processName + '</td><td>' + p.detailedWorkContent + '</td><td colspan="9">등록된 위험요인 없음</td></tr>';
+      } else {
+        p.hazards.forEach((h) => {
+          html += '<tr><td>' + p.processName + '</td><td>' + p.detailedWorkContent + '</td><td>' + h.hazardSituation + '</td><td>' + h.legalBasis + '</td><td>' + h.currentSafetyMeasures + '</td><td>' + h.likelihood + '</td><td>' + h.severity + '</td><td>' + h.riskScore + ' (' + h.riskLevel + ')</td><td>' + h.reductionMeasures + '</td><td>' + h.postRiskScore + '</td><td>' + h.responsiblePerson + '</td></tr>';
+        });
+      }
+    });
+    html += '</table></body></html>';
+    const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = (assessment.title || 'KRAS_위험성평가표').replace(/[\\/:*?"<>|]/g, '_') + '.xls';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSaveAsCompanyTemplate = () => {
+    try {
+      const key = 'kras_pro_templates_v1';
+      const prev = JSON.parse(localStorage.getItem(key) || '[]');
+      const item = {
+        id: 'tpl_' + Date.now(),
+        name: '[사내표준] ' + assessment.title,
+        category: assessment.assessmentType === 'regular' ? '정기 위험성평가 표준' : '수시 위험성평가 표준',
+        description: assessment.processes.length + '개 공정 · 위험요인 ' + assessment.processes.reduce((s, p) => s + p.hazards.length, 0) + '건 포함',
+        createdAt: new Date().toISOString().split('T')[0],
+        processes: JSON.parse(JSON.stringify(assessment.processes)),
+      };
+      localStorage.setItem(key, JSON.stringify([item, ...prev]));
+      setSavedTplToast(true);
+      setTimeout(() => setSavedTplToast(false), 2500);
+    } catch {}
+  };
+
   // Helper to copy standard document representation as markdown table
   const handleCopyMarkdown = () => {
     let markdown = `# 위험성평가 보고서 - ${assessment.title}\n\n`;
@@ -307,8 +352,24 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
               {copied ? '복사됨!' : '마크다운 복사'}
             </button>
             <button
+              onClick={handleSaveAsCompanyTemplate}
+              className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-200 text-xs font-semibold transition cursor-pointer"
+              id="doc-save-template-btn"
+            >
+              <CheckCircle2 size={14} />
+              {savedTplToast ? '템플릿 저장됨!' : '회사 템플릿 저장'}
+            </button>
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow transition cursor-pointer"
+              id="doc-excel-btn"
+            >
+              <Download size={14} />
+              Excel 다운로드
+            </button>
+            <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 rounded-lg text-xs font-semibold shadow transition"
+              className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 rounded-lg text-xs font-semibold shadow transition cursor-pointer"
               id="doc-print-btn"
             >
               <Printer size={14} />
