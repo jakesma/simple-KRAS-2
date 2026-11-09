@@ -51,9 +51,12 @@ export type PaymentExecutionResult = PaymentSuccessResult | PaymentFailureResult
 const STORAGE_STORE_ID_KEY = 'simple_kras_portone_store_id';
 const STORAGE_CHANNEL_KEY = 'simple_kras_portone_channel_key';
 
+const DEFAULT_PORTONE_STORE_ID = 'store-6926905d-7ea7-4062-8309-61df1411c29b';
+const DEFAULT_PORTONE_CHANNEL_KEY = 'channel-key-c65d82b3-22cc-4db4-9bce-3a8266440159';
+
 export function getPortOneConfig(): { storeId: string; channelKey: string } {
-  const envStoreId = (import.meta.env?.VITE_PORTONE_STORE_ID || '').trim();
-  const envChannelKey = (import.meta.env?.VITE_PORTONE_CHANNEL_KEY || '').trim();
+  const envStoreId = (import.meta.env?.VITE_PORTONE_STORE_ID || DEFAULT_PORTONE_STORE_ID).trim();
+  const envChannelKey = (import.meta.env?.VITE_PORTONE_CHANNEL_KEY || DEFAULT_PORTONE_CHANNEL_KEY).trim();
 
   const read = (k: string) => (typeof window !== 'undefined' ? localStorage.getItem(k) || '' : '').trim();
 

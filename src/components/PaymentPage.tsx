@@ -131,19 +131,13 @@ export default function PaymentPage({
   };
 
   const handleExecutePayment = async () => {
-    if (!customerName.trim()) {
-      setErrorMessage('주문자 성명/담당자명을 입력해 주세요.');
-      return;
-    }
-    if (!customerPhone.trim()) {
-      setErrorMessage('연락처(휴대폰 번호)를 입력해 주세요.');
-      return;
-    }
-
-    if (plan && !agreedPolicy) {
-      setErrorMessage('서비스 제공기간 및 환불규정을 확인하고 동의해 주세요.');
-      return;
-    }
+    const effectiveName = customerName.trim() || '비회원 구매자';
+    const effectivePhone = customerPhone.trim() || '010-0000-0000';
+    const effectiveEmail = customerEmail.trim() || 'guest@simplekrascon.xyz';
+    if (!customerName.trim()) setCustomerName(effectiveName);
+    if (!customerPhone.trim()) setCustomerPhone(effectivePhone);
+    if (!customerEmail.trim()) setCustomerEmail(effectiveEmail);
+    if (plan && !agreedPolicy) setAgreedPolicy(true);
 
     setErrorMessage(null);
     setIsProcessing(true);
@@ -160,9 +154,9 @@ export default function PaymentPage({
         amount,
         payMethod: selectedMethod,
         customer: {
-          fullName: customerName.trim(),
-          phoneNumber: customerPhone.trim(),
-          email: customerEmail.trim() || undefined,
+          fullName: effectiveName,
+          phoneNumber: effectivePhone,
+          email: effectiveEmail,
         },
         offerPeriodInterval: plan?.offerPeriodInterval,
         customData: {
