@@ -92,6 +92,14 @@ export async function requestKgInicisPayment(
   const uniquePaymentId = `kras-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 
   try {
+    const rawPhone = (params.customer.phoneNumber || '').replace(/[^0-9-]/g, '');
+    const safePhone = /[0-9]{8,}/.test(rawPhone.replace(/-/g, '')) ? rawPhone : '010-0000-0000';
+    const rawEmail = (params.customer.email || '').trim();
+    const safeEmail = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(rawEmail)
+      ? rawEmail
+      : 'guest@simplekrascon.xyz';
+    const safeName = (params.customer.fullName || '고객').replace(/[<>'"&%;]/g, '').trim() || '고객';
+
     const paymentPayload: any = {
       storeId,
       paymentId: uniquePaymentId,
@@ -102,9 +110,9 @@ export async function requestKgInicisPayment(
       // 비실물(디지털) 장기 서비스
       productType: 'DIGITAL',
       customer: {
-        fullName: params.customer.fullName || '고객',
-        phoneNumber: params.customer.phoneNumber || '010-0000-0000',
-        email: params.customer.email || 'customer@example.com',
+        fullName: safeName,
+        phoneNumber: safePhone,
+        email: safeEmail,
       },
       redirectUrl: `${window.location.origin}/payment/complete`,
     };
@@ -133,9 +141,9 @@ export async function requestKgInicisPayment(
       };
     }
 
-    if (params.customData) {
-      paymentPayload.customData = params.customData;
-    }
+    // 주의: KG이니시스 V2는 customData(merchantData)에 한글이 포함되면
+    // "[V023] 파라미터의 데이터 설정이 잘못되었습니다. [merchantData 한글 사용 불가]" 오류가 발생하므로
+    // customData는 전달하지 않거나 영문/숫자(ASCII)만 허용합니다.
 
     const response = await PortOne.requestPayment(paymentPayload);
 

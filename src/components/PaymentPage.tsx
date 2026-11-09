@@ -160,9 +160,8 @@ export default function PaymentPage({
         },
         offerPeriodInterval: plan?.offerPeriodInterval,
         customData: {
-          companyName: companyName.trim() || undefined,
           service: 'SIMPLE-KRAS-CONSTRUCTION',
-          plan: planKey,
+          plan: planKey || 'Plus',
           isGuest: !getCurrentUser(),
         }
       });

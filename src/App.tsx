@@ -183,7 +183,14 @@ const CONSTRUCTION_INITIAL_ASSESSMENTS: RiskAssessment[] = [{
 
 export default function App() {
   const [showLanding, setShowLanding] = useState(() => {
-    // Unauthenticated visitors always start on the main page.
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const view = (params.get('view') || '').toLowerCase();
+      const plan = (params.get('plan') || '').toLowerCase();
+      if (view === 'payment-plus' || view === 'payment-pro' || plan === 'plus' || plan === 'pro') {
+        return false;
+      }
+    }
     return true;
   });
 
@@ -202,9 +209,21 @@ export default function App() {
   const [viewingAssessmentId, setViewingAssessmentId] = useState<string | null>(null);
   const [tbmAssessmentId, setTbmAssessmentId] = useState<string | null>(null);
   
-  // Payment state
-  const [showPayment, setShowPayment] = useState(false);
-  const [paymentPlan, setPaymentPlan] = useState<PaidPlanKey>('Plus');
+  // Payment state (supports direct URL query: ?view=payment-plus, ?view=payment-pro, ?plan=plus, ?plan=pro)
+  const [showPayment, setShowPayment] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const view = (params.get('view') || '').toLowerCase();
+    const plan = (params.get('plan') || '').toLowerCase();
+    return view === 'payment-plus' || view === 'payment-pro' || plan === 'plus' || plan === 'pro';
+  });
+  const [paymentPlan, setPaymentPlan] = useState<PaidPlanKey>(() => {
+    if (typeof window === 'undefined') return 'Plus';
+    const params = new URLSearchParams(window.location.search);
+    const view = (params.get('view') || '').toLowerCase();
+    const plan = (params.get('plan') || '').toLowerCase();
+    return view === 'payment-pro' || plan === 'pro' ? 'Pro' : 'Plus';
+  });
   const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(() => {
     return typeof window !== 'undefined' ? localStorage.getItem('kras_subscription_plan') : null;
   });
