@@ -456,11 +456,16 @@ export default function App() {
     return (
       <LandingPage 
         onStartClick={handleEnterDashboard}
+        onGuestLoginClick={handleGuestAccess}
         onCategoryClick={() => {
           setShowCategorySelector(true);
           setShowLanding(false);
         }}
         onPaymentClick={(plan) => {
+          if (!authUser) {
+            localStorage.setItem('kras_construction_guest_mode', 'true');
+            setIsGuestMode(true);
+          }
           setPaymentPlan(plan);
           setShowPayment(true);
           setShowLanding(false);
@@ -553,6 +558,14 @@ export default function App() {
       <AuthPage
         onAuthSuccess={() => setShowLanding(false)}
         onGuestAccess={handleGuestAccess}
+        onBackToLanding={() => setShowLanding(true)}
+        onGuestPayment={(plan) => {
+          localStorage.setItem('kras_construction_guest_mode', 'true');
+          setIsGuestMode(true);
+          setPaymentPlan(plan);
+          setShowPayment(true);
+          setShowLanding(false);
+        }}
       />
     );
   }

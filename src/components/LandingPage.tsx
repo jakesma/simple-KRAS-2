@@ -6,11 +6,12 @@ import RefundPolicy from './RefundPolicy';
 
 interface LandingPageProps {
   onStartClick: () => void;
+  onGuestLoginClick?: () => void;
   onCategoryClick: () => void;
   onPaymentClick?: (plan: 'Plus' | 'Pro', amount: number) => void;
 }
 
-export default function LandingPage({ onStartClick, onCategoryClick, onPaymentClick }: LandingPageProps) {
+export default function LandingPage({ onStartClick, onGuestLoginClick, onCategoryClick, onPaymentClick }: LandingPageProps) {
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
   const [isTermsOfServiceOpen, setIsTermsOfServiceOpen] = useState(false);
   const [isRefundPolicyOpen, setIsRefundPolicyOpen] = useState(false);
@@ -27,16 +28,24 @@ export default function LandingPage({ onStartClick, onCategoryClick, onPaymentCl
               <div className="text-sm font-bold text-gray-900">KRAS 위험성평가</div>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-gray-600 hover:text-gray-900">기능</a>
-            <a href="#how" className="text-sm text-gray-600 hover:text-gray-900">사용법</a>
-            <a href="#iso45001" className="text-sm text-gray-600 hover:text-gray-900">ISO 45001</a>
-            <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900">요금제</a>
+          <div className="flex items-center gap-2 sm:gap-5">
+            <a href="#features" className="hidden md:inline text-sm text-gray-600 hover:text-gray-900">기능</a>
+            <a href="#how" className="hidden md:inline text-sm text-gray-600 hover:text-gray-900">사용법</a>
+            <a href="#iso45001" className="hidden md:inline text-sm text-gray-600 hover:text-gray-900">ISO 45001</a>
+            <a href="#pricing" className="hidden sm:inline text-sm text-gray-600 hover:text-gray-900">요금제</a>
             <button
-              onClick={onStartClick}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition flex items-center gap-2"
+              type="button"
+              onClick={onGuestLoginClick || onStartClick}
+              className="px-3.5 py-2 border-2 border-emerald-600 text-emerald-700 bg-emerald-50/70 rounded-lg text-xs sm:text-sm font-bold hover:bg-emerald-100 transition cursor-pointer"
             >
-              무료로 시작하기 <ArrowRight className="w-4 h-4" />
+              비회원 로그인
+            </button>
+            <button
+              type="button"
+              onClick={onStartClick}
+              className="px-3.5 py-2 bg-emerald-600 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-emerald-700 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>무료로 시작하기</span> <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>

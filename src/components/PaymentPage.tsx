@@ -193,15 +193,17 @@ export default function PaymentPage({
     }
   };
 
+  const handleGuestAutoFill = () => {
+    if (!customerName.trim()) setCustomerName('비회원 구매자');
+    if (!customerPhone.trim()) setCustomerPhone('010-0000-0000');
+    if (!customerEmail.trim()) setCustomerEmail('guest@simplekrascon.xyz');
+    setAgreedPolicy(true);
+    setErrorMessage(null);
+  };
+
   const handleSimulateTestPayment = () => {
-    if (!customerName.trim()) {
-      setErrorMessage('주문자 성명/담당자명을 먼저 입력해 주세요.');
-      return;
-    }
-    if (!customerPhone.trim()) {
-      setErrorMessage('연락처(휴대폰 번호)를 먼저 입력해 주세요.');
-      return;
-    }
+    if (!customerName.trim()) setCustomerName('비회원 구매자');
+    if (!customerPhone.trim()) setCustomerPhone('010-0000-0000');
 
     setErrorMessage(null);
     const testResult: PaymentSuccessResult = {
@@ -414,14 +416,23 @@ export default function PaymentPage({
           </div>
 
           {!getCurrentUser() && (
-            <div className="mb-4 p-3.5 bg-blue-50/80 rounded-xl border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
-              <span className="text-base leading-none">💡</span>
-              <div className="flex-1">
-                <p className="font-bold text-blue-950">회원가입 없이 즉시 구매 가능합니다</p>
-                <p className="text-blue-800 mt-0.5 leading-relaxed">
-                  결제 완료 즉시 플랫폼 이용 권한이 부여되며, 결제 영수증과 승인 내역은 아래 입력하시는 휴대폰 번호 및 이메일로 안전하게 발송됩니다.
-                </p>
+            <div className="mb-4 p-4 bg-emerald-50/90 rounded-xl border-2 border-emerald-400 text-xs text-emerald-950 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                  <p className="font-bold text-sm text-emerald-950">비회원 로그인 적용됨 · 회원가입 없이 즉시 결제 가능</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleGuestAutoFill}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition shadow-xs cursor-pointer"
+                >
+                  비회원 주문정보 간편 자동입력
+                </button>
               </div>
+              <p className="text-emerald-800 leading-relaxed">
+                별도의 회원 로그인 없이 아래 주문자 성명과 휴대폰 번호만 입력(또는 우측 상단 <strong>비회원 주문정보 간편 자동입력</strong> 클릭)하시면 바로 결제를 진행하실 수 있으며, 결제 완료 즉시 플랫폼 이용 권한이 부여됩니다.
+              </p>
             </div>
           )}
 

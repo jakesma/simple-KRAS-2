@@ -5,18 +5,13 @@ import { getFirestore } from 'firebase/firestore';
 // Construction uses a dedicated Firebase project so accounts and stored records
 // are isolated from the original manufacturing service.
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_CONSTRUCTION_FIREBASE_API_KEY || 'demo-key-for-development',
-  authDomain: import.meta.env.VITE_CONSTRUCTION_FIREBASE_AUTH_DOMAIN || 'demo-project.firebaseapp.com',
-  projectId: import.meta.env.VITE_CONSTRUCTION_FIREBASE_PROJECT_ID || 'demo-project-id',
-  storageBucket: import.meta.env.VITE_CONSTRUCTION_FIREBASE_STORAGE_BUCKET || 'demo-project.appspot.com',
-  messagingSenderId: import.meta.env.VITE_CONSTRUCTION_FIREBASE_MESSAGING_SENDER_ID || '123456789',
-  appId: import.meta.env.VITE_CONSTRUCTION_FIREBASE_APP_ID || '1:123456789:web:abcdef1234567890',
+  apiKey: import.meta.env.VITE_CONSTRUCTION_FIREBASE_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyDsX3DbwYBFHFzvZZfTghpPBSWU3oLvBbM',
+  authDomain: import.meta.env.VITE_CONSTRUCTION_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'kras1-8da40.firebaseapp.com',
+  projectId: import.meta.env.VITE_CONSTRUCTION_FIREBASE_PROJECT_ID || import.meta.env.VITE_FIREBASE_PROJECT_ID || 'kras1-8da40',
+  storageBucket: import.meta.env.VITE_CONSTRUCTION_FIREBASE_STORAGE_BUCKET || import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'kras1-8da40.appspot.com',
+  messagingSenderId: import.meta.env.VITE_CONSTRUCTION_FIREBASE_MESSAGING_SENDER_ID || import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '541018613242',
+  appId: import.meta.env.VITE_CONSTRUCTION_FIREBASE_APP_ID || import.meta.env.VITE_FIREBASE_APP_ID || '1:541018613242:web:674857aae8b1775081b043',
 };
-
-// Validate Firebase config
-if (firebaseConfig.apiKey === 'demo-key-for-development') {
-  console.warn('Firebase configuration is using demo/default values. Set VITE_CONSTRUCTION_FIREBASE_* values before deployment.');
-}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
