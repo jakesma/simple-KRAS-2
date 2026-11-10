@@ -362,16 +362,31 @@ export default function ProWorkspaceHub({
 
   const handleSubmitSupportTicket = () => {
     if (!ticketTitle.trim() || !ticketContent.trim()) return;
+    const titleVal = ticketTitle.trim();
+    const contentVal = ticketContent.trim();
+    const contactVal = ticketContact.trim() || '등록된 연락처';
     const item: SupportTicketItem = {
       id: `tkt_${Date.now()}`,
       category: ticketCategory,
-      title: ticketTitle.trim(),
-      content: ticketContent.trim(),
-      contact: ticketContact.trim() || '등록된 연락처',
+      title: titleVal,
+      content: contentVal,
+      contact: contactVal,
       status: '우선 배정됨 (전담 매니저 확인중)',
       createdAt: new Date().toISOString().split('T')[0],
     };
     setTickets([item, ...tickets]);
+    // jake3082kk@gmail.com 으로 실시간 문의 알림 전송
+    fetch('https://formsubmit.co/ajax/jake3082kk@gmail.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        _subject: `[SIMPLE KRAS PRO 우선지원] ${ticketCategory} - ${titleVal}`,
+        분류: ticketCategory,
+        제목: titleVal,
+        연락처: contactVal,
+        내용: contentVal,
+      }),
+    }).catch(() => {});
     setTicketTitle('');
     setTicketContent('');
     setTicketContact('');
@@ -890,7 +905,7 @@ export default function ProWorkspaceHub({
                 </div>
                 <div>
                   <span className="text-xs font-bold text-slate-400">PRO 전용 우선 고객지원 핫라인</span>
-                  <div className="text-base font-black text-slate-900 mt-0.5">010-6332-3082</div>
+                  <div className="text-base font-black text-slate-900 mt-0.5">010-6491-6210</div>
                   <span className="text-[11px] text-slate-500">평일 09:00 ~ 18:00 (PRO 고객 최우선 응대)</span>
                 </div>
               </div>
@@ -900,7 +915,12 @@ export default function ProWorkspaceHub({
                 </div>
                 <div>
                   <span className="text-xs font-bold text-slate-400">전담 기술/안전컨설팅 이메일</span>
-                  <div className="text-base font-black text-slate-900 mt-0.5">Safety.keras@gmail.com</div>
+                  <a
+                    href="mailto:jake3082kk@gmail.com"
+                    className="text-base font-black text-slate-900 hover:text-indigo-600 mt-0.5 block"
+                  >
+                    jake3082kk@gmail.com
+                  </a>
                   <span className="text-[11px] text-slate-500">위험성평가 양식 커스텀 및 감독 대응 지원</span>
                 </div>
               </div>
@@ -1001,3 +1021,4 @@ export default function ProWorkspaceHub({
     </div>
   );
 }
+
