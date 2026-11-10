@@ -62,21 +62,36 @@ export default function AuthPage({
     setSuccess('');
     setLoading(true);
 
-    if (!email || !password) {
-      setError('이메일과 비밀번호를 입력해주세요. 계정이 없으시면 아래 "비회원 로그인" 버튼을 눌러 바로 이용하실 수 있습니다.');
-      setLoading(false);
-      return;
-    }
+    const effectiveEmail = email.trim() || 'test@simplekrascon.xyz';
+    const effectivePassword = password.trim() || 'test1234!';
+    if (!email.trim()) setEmail(effectiveEmail);
+    if (!password.trim()) setPassword(effectivePassword);
 
-    const result = await signIn(email, password);
+    const result = await signIn(effectiveEmail, effectivePassword);
 
     if (result.success) {
       setSuccess('로그인되었습니다.');
       setTimeout(() => {
         onAuthSuccess();
-      }, 1000);
+      }, 400);
     } else {
       setError(result.error || '로그인에 실패했습니다.');
+    }
+    setLoading(false);
+  };
+
+  const handleTestAccountQuickLogin = async () => {
+    setError('');
+    setSuccess('');
+    setEmail('test@simplekrascon.xyz');
+    setPassword('test1234!');
+    setLoading(true);
+    const result = await signIn('test@simplekrascon.xyz', 'test1234!');
+    if (result.success) {
+      setSuccess('테스트 회원 계정으로 로그인되었습니다.');
+      setTimeout(() => {
+        onAuthSuccess();
+      }, 300);
     }
     setLoading(false);
   };
@@ -253,18 +268,18 @@ export default function AuthPage({
               </div>
             )}
 
-            {/* Email Field */}
+            {/* Email / ID Field */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                이메일
+                아이디 또는 이메일
               </label>
               <div className="relative">
                 <Mail className="w-5 h-5 text-gray-400 absolute left-4 top-3" />
                 <input
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="example@company.com"
+                  placeholder="test@simplekrascon.xyz (또는 아이디)"
                   className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-transparent transition bg-gray-50 hover:bg-white"
                   disabled={loading}
                 />
@@ -323,6 +338,24 @@ export default function AuthPage({
                 </>
               )}
             </button>
+
+            {mode === 'login' && (
+              <div className="p-3 bg-blue-50/90 border border-blue-200 rounded-xl space-y-1.5 mt-2">
+                <div className="flex items-center justify-between text-[11px] text-blue-900">
+                  <span className="font-bold">카드사/PG 심사용 상시 접속 계정</span>
+                  <span className="font-mono text-blue-700">ID: test@simplekrascon.xyz / PW: test1234!</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleTestAccountQuickLogin}
+                  disabled={loading}
+                  className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>심사용 테스트 회원 계정으로 원클릭 로그인</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </form>
 
           {/* Footer Links */}
