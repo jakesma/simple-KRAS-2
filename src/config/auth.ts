@@ -69,7 +69,11 @@ const getErrorMessage = (error: AuthError): string => {
 };
 
 // Sign up with email and password
-export const signUp = async (email: string, password: string, displayName: string) => {
+export const signUp = async (
+  email: string,
+  password: string,
+  displayName: string
+): Promise<{ success: boolean; user?: AuthUser; error?: string }> => {
   const normalizedEmail = email.includes('@') ? email.trim() : `${email.trim()}@simplekrascon.xyz`;
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
@@ -107,7 +111,10 @@ export const signUp = async (email: string, password: string, displayName: strin
 };
 
 // Sign in with email and password (심사 기간 중 계정 접속 100% 보장)
-export const signIn = async (email: string, password: string) => {
+export const signIn = async (
+  email: string,
+  password: string
+): Promise<{ success: boolean; user?: AuthUser; error?: string }> => {
   const trimmedId = email.trim();
   const normalizedEmail = trimmedId.includes('@') ? trimmedId : `${trimmedId}@simplekrascon.xyz`;
 

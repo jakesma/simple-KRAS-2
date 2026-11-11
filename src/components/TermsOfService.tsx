@@ -146,9 +146,9 @@ export default function TermsOfService({ isOpen, onClose }: TermsOfServiceProps)
           <div>
             <h3 className="text-lg font-bold text-gray-900 mb-3">제11조 지적재산권</h3>
             <div className="space-y-2 ml-4 text-gray-600">
-              <p>① 서비스에 포함된 모든 저작권, 특허권, 상표권 등은 회사 또는 라이센스 제공자에게 귀속됩니다.</p>
+              <p>① 서비스에 포함된 모든 저작권, 특허권, 상표권 등은 회사 또는 라이선스 제공자에게 귀속됩니다.</p>
               <p>② 이용자는 개인 및 소속 사업장 목적의 이용 범위 내에서만 서비스를 이용할 수 있습니다.</p>
-              <p>③ 서비스의 내용을 무단 복제, 배포, 전송, 전개 등은 할 수 없습니다.</p>
+              <p>③ 서비스의 내용을 무단 복제, 배포, 전송, 전시 등을 할 수 없습니다.</p>
             </div>
           </div>
 

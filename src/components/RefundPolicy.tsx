@@ -91,7 +91,7 @@ export default function RefundPolicy({ isOpen, onClose }: RefundPolicyProps) {
             <div className="space-y-3 ml-4">
               <p className="font-semibold">Step 1: 환불 신청</p>
               <ul className="list-disc list-inside space-y-1 text-gray-600 ml-2">
-                <li>고객 지원팀 전화(010-6491-6210) 또는 이메일(contact@automosafety.co.kr)로 주문번호 및 환불 사유 접수</li>
+                <li>고객 지원팀 전화(010-6491-6210) 또는 이메일(jake3082kk@gmail.com)로 주문번호 및 환불 사유 접수</li>
               </ul>
 
               <p className="font-semibold mt-3">Step 2: 환불 심사</p>
@@ -121,7 +121,8 @@ export default function RefundPolicy({ isOpen, onClose }: RefundPolicyProps) {
               <div><span className="font-semibold">상호명:</span> 오토모 연구소</div>
               <div><span className="font-semibold">대표자:</span> 김계환</div>
               <div><span className="font-semibold">전화:</span> 010-6491-6210</div>
-              <div><span className="font-semibold">이메일:</span> contact@automosafety.co.kr</div>
+              <div><span className="font-semibold">이메일:</span> jake3082kk@gmail.com</div>
+              <div><span className="font-semibold">사업장 주소:</span> 경기도 평택시 소사7로 8, 108동 804호</div>
               <div><span className="font-semibold">운영시간:</span> 평일 09:00 ~ 18:00 (점심시간 12:00 ~ 13:00)</div>
             </div>
           </div>

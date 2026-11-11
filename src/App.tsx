@@ -833,12 +833,12 @@ export default function App() {
 
       {/* Standard Bottom Disclaimer (Hidden on Print) */}
       <footer className="bg-white border-t border-slate-200 py-4 px-6 text-center text-xs text-slate-400 print:hidden" id="app-footer">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4" id="footer-inner">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2" id="footer-inner">
           <div className="flex items-center gap-1">
             <Info size={14} />
-            <span>KOSHA KRAS 5단계 건설 위험성평가 가이드 연동 서비스</span>
+            <span>KOSHA KRAS 5단계 건설 위험성평가 가이드 연동 서비스 · 오토모 연구소 (경기도 평택시 소사7로 8, 108동 804호)</span>
           </div>
-          <div>© 2026 KRAS Generator Inc. All Rights Reserved.</div>
+          <div>© 2026 AUTOMO SAFETY LAB Inc. All Rights Reserved.</div>
         </div>
       </footer>
 

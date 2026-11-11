@@ -144,9 +144,9 @@ export default function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
               <div><span className="font-semibold">회사명:</span> 오토모 연구소</div>
               <div><span className="font-semibold">대표자:</span> 김계환</div>
               <div><span className="font-semibold">개인정보 보호책임자:</span> 김계환</div>
-              <div><span className="font-semibold">연락처:</span> 01064916210</div>
-              <div><span className="font-semibold">이메일:</span> contact@automosafety.co.kr</div>
-              <div><span className="font-semibold">사업장 주소:</span> 경기도 평택시 소사고로 8, 108동 804호</div>
+              <div><span className="font-semibold">연락처:</span> 010-6491-6210</div>
+              <div><span className="font-semibold">이메일:</span> jake3082kk@gmail.com</div>
+              <div><span className="font-semibold">사업장 주소:</span> 경기도 평택시 소사7로 8, 108동 804호</div>
             </div>
           </div>
 

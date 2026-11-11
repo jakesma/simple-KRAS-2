@@ -519,9 +519,12 @@ export default function LandingPage({ onStartClick, onGuestLoginClick, onCategor
                   다수 현장, 맞춤 기능, 전담 지원이 필요하신가요? Enterprise 플랜으로 맞춤 계약을 제공합니다.
                 </p>
               </div>
-              <button className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition flex items-center gap-2 whitespace-nowrap">
+              <a
+                href="mailto:jake3082kk@gmail.com"
+                className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition flex items-center gap-2 whitespace-nowrap"
+              >
                 문의하기 <ArrowRight className="w-4 h-4" />
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -609,10 +612,10 @@ export default function LandingPage({ onStartClick, onGuestLoginClick, onCategor
                 <span className="font-semibold">대표자명:</span> 김계환
               </div>
               <div>
-                <span className="font-semibold">연락처:</span> 01064916210
+                <span className="font-semibold">연락처:</span> 010-6491-6210
               </div>
               <div>
-                <span className="font-semibold">사업장주소:</span> 경기도 평택시 소사고로 8, 108동 804호
+                <span className="font-semibold">사업장주소:</span> 경기도 평택시 소사7로 8, 108동 804호
               </div>
             </div>
           </div>
