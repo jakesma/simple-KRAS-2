@@ -61,6 +61,30 @@ body {
     box-sizing: border-box !important;
   }
 
+  #printable-sheet table {
+    max-width: 100% !important;
+    table-layout: fixed !important;
+  }
+
+  #printable-sheet thead {
+    display: table-header-group !important;
+  }
+
+  #printable-sheet tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #printable-sheet th,
+  #printable-sheet td {
+    min-width: 0 !important;
+    max-width: none !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    vertical-align: top;
+  }
+
   /* Title header alignment and spacing */
   #sheet-title-header {
     margin-bottom: 8px !important;
@@ -127,6 +151,14 @@ body {
     border-bottom: 2px solid #0f172a !important;
   }
 
+  html[data-print-orientation="landscape"] #kras-master-table {
+    font-size: 8.5px !important;
+  }
+
+  html[data-print-orientation="portrait"] #kras-master-table {
+    font-size: 7px !important;
+  }
+
   #kras-master-table th {
     padding: 3px 2px !important;
     font-size: 8.5px !important;
@@ -174,8 +206,8 @@ body {
     page-break-before: always !important;
     padding-top: 8mm !important;
     margin-top: 0 !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   /* Photo cards: two columns side by side on one portrait page */
@@ -201,6 +233,10 @@ body {
 
   #photo-cards-grid [class*="aspect-"] {
     aspect-ratio: 1 / 1 !important;
+  }
+
+  html[data-print-orientation="landscape"] #photo-cards-grid [class*="aspect-"] {
+    aspect-ratio: 4 / 3 !important;
   }
 
   #photo-cards-grid img {

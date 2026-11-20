@@ -105,4 +105,62 @@ test.describe('KRAS App basic flows', () => {
       await page.waitForTimeout(500);
     }
   });
+
+  test('risk assessment print defaults to landscape and supports portrait', async ({ page }) => {
+    const landingButton = page.locator('button').filter({ hasText: '신규 위험성평가 생성' }).first();
+    await landingButton.click();
+    await page.getByRole('button', { name: '비회원 로그인 (즉시 시작하기)' }).click();
+    await page.locator('button[id^="view-doc-btn-"]').first().click();
+
+    const orientation = page.locator('#print-orientation-select');
+    await expect(orientation).toHaveValue('landscape');
+
+    await page.evaluate(() => {
+      (window as Window & { __printCapture?: { orientation?: string; pageRule?: string } }).print = () => {
+        (window as Window & { __printCapture?: { orientation?: string; pageRule?: string } }).__printCapture = {
+          orientation: document.documentElement.dataset.printOrientation,
+          pageRule: document.getElementById('kras-print-page-style')?.textContent,
+        };
+      };
+    });
+
+    await page.locator('#doc-print-btn').click();
+    await expect.poll(() => page.evaluate(
+      () => (window as Window & { __printCapture?: { orientation?: string } }).__printCapture?.orientation,
+    )).toBe('landscape');
+    await expect.poll(() => page.evaluate(
+      () => (window as Window & { __printCapture?: { pageRule?: string } }).__printCapture?.pageRule,
+    )).toContain('A4 landscape');
+
+    await orientation.selectOption('portrait');
+    await page.locator('#doc-print-btn').click();
+    await expect.poll(() => page.evaluate(
+      () => (window as Window & { __printCapture?: { orientation?: string } }).__printCapture?.orientation,
+    )).toBe('portrait');
+    await expect.poll(() => page.evaluate(
+      () => (window as Window & { __printCapture?: { pageRule?: string } }).__printCapture?.pageRule,
+    )).toContain('A4 portrait');
+
+    await page.setViewportSize({ width: 1123, height: 794 });
+    await page.emulateMedia({ media: 'print' });
+    const printLayout = await page.evaluate(() => {
+      document.documentElement.dataset.printOrientation = 'landscape';
+      const container = document.getElementById('kras-scroll-container');
+      const table = document.getElementById('kras-master-table');
+      const header = table?.querySelector('thead');
+      if (!container || !table || !header) {
+        throw new Error('KRAS print table is missing.');
+      }
+      return {
+        containerWidth: container.clientWidth,
+        tableWidth: table.scrollWidth,
+        tableLayout: getComputedStyle(table).tableLayout,
+        headerDisplay: getComputedStyle(header).display,
+      };
+    });
+
+    expect(printLayout.tableWidth).toBeLessThanOrEqual(printLayout.containerWidth + 1);
+    expect(printLayout.tableLayout).toBe('fixed');
+    expect(printLayout.headerDisplay).toBe('table-header-group');
+  });
 });

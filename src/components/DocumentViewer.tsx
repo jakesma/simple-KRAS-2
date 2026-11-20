@@ -22,6 +22,25 @@ interface DocumentViewerProps {
 }
 
 type DocumentTab = 'survey' | 'hazard' | 'estimation' | 'reduction' | 'kras';
+type PrintOrientation = 'landscape' | 'portrait';
+
+const PRINT_PAGE_STYLE_ID = 'kras-print-page-style';
+
+function applyPrintLayout(orientation: PrintOrientation) {
+  document.documentElement.dataset.printOrientation = orientation;
+  let style = document.getElementById(PRINT_PAGE_STYLE_ID) as HTMLStyleElement | null;
+  if (!style) {
+    style = document.createElement('style');
+    style.id = PRINT_PAGE_STYLE_ID;
+    document.head.appendChild(style);
+  }
+  style.textContent = `@page { size: A4 ${orientation}; margin: 0; }`;
+}
+
+function clearPrintLayout() {
+  delete document.documentElement.dataset.printOrientation;
+  document.getElementById(PRINT_PAGE_STYLE_ID)?.remove();
+}
 
 export default function DocumentViewer({
   assessment,
@@ -36,6 +55,7 @@ export default function DocumentViewer({
   const [copied, setCopied] = useState(false);
   const [includeWorkerSignatures, setIncludeWorkerSignatures] = useState(true);
   const [includePhotoSheet, setIncludePhotoSheet] = useState(true);
+  const [printOrientation, setPrintOrientation] = useState<PrintOrientation>('landscape');
 
   // Derive unique workers from all processes for automatic signature list sizing
   const detectedWorkers = Array.from(
@@ -71,9 +91,11 @@ export default function DocumentViewer({
     const handleBeforePrint = () => {
       originalTitle = document.title;
       document.title = '';
+      applyPrintLayout(printOrientation);
     };
     const handleAfterPrint = () => {
       document.title = originalTitle;
+      clearPrintLayout();
     };
 
     window.addEventListener('beforeprint', handleBeforePrint);
@@ -82,8 +104,9 @@ export default function DocumentViewer({
     return () => {
       window.removeEventListener('beforeprint', handleBeforePrint);
       window.removeEventListener('afterprint', handleAfterPrint);
+      clearPrintLayout();
     };
-  }, []);
+  }, [printOrientation]);
 
   // Photo Sheet State (Applied only to standard KRAS evaluation sheet)
   const [photoSheet, setPhotoSheet] = useState<AssessmentPhotoSheet>(() => {
@@ -210,11 +233,14 @@ export default function DocumentViewer({
 
   const handlePrint = () => {
     const originalTitle = document.title;
-    document.title = '';
-    window.print();
-    setTimeout(() => {
+    applyPrintLayout(printOrientation);
+    try {
+      document.title = '';
+      window.print();
+    } finally {
       document.title = originalTitle;
-    }, 1000);
+      clearPrintLayout();
+    }
   };
 
   const [savedTplToast, setSavedTplToast] = useState(false);
@@ -471,9 +497,21 @@ export default function DocumentViewer({
         <div className="bg-amber-50/80 border border-amber-200 rounded-lg p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 text-amber-900 font-medium">
             <span className="font-bold bg-amber-200/90 text-amber-900 px-2 py-0.5 rounded text-[11px]">인쇄 최적화 설정</span>
-            <span>브라우저 인쇄 시 헤더(제목) 및 푸터(URL)가 자동 제외되며, 1페이지에 깔끔하게 맞춰집니다.</span>
+            <span>가로 인쇄를 기본으로 하며 표 머리글, 줄바꿈, 페이지 분할을 자동 최적화합니다.</span>
           </div>
           <div className="flex items-center gap-4">
+            <label className="flex items-center gap-1.5 text-slate-800 font-medium">
+              <span>용지 방향</span>
+              <select
+                value={printOrientation}
+                onChange={(event) => setPrintOrientation(event.target.value as PrintOrientation)}
+                className="rounded border border-amber-300 bg-white px-2 py-1 text-xs font-semibold text-slate-900 focus:border-slate-700 focus:outline-none"
+                id="print-orientation-select"
+              >
+                <option value="landscape">가로 (권장)</option>
+                <option value="portrait">세로</option>
+              </select>
+            </label>
             <label className="flex items-center gap-1.5 cursor-pointer text-slate-800 font-medium select-none">
               <input
                 type="checkbox"
@@ -827,10 +865,13 @@ export default function DocumentViewer({
                       p.hazards.map((h, index) => (
                         <tr key={h.id}>
                           {index === 0 ? (
-                            <td rowSpan={p.hazards.length} className="border-r border-slate-900 p-2 font-bold bg-slate-50/50 align-middle text-center w-24">
+                            <td rowSpan={p.hazards.length} className="border-r border-slate-900 p-2 font-bold bg-slate-50/50 align-middle text-center w-24 print:hidden">
                               {p.processName}
                             </td>
                           ) : null}
+                          <td className="hidden print:table-cell border-r border-slate-900 p-1.5 font-bold bg-slate-50/50 align-middle text-center">
+                            {p.processName}
+                          </td>
                           <td className="border-r border-slate-900 p-1.5 whitespace-pre-wrap">{h.hazardSituation}</td>
                           <td className="border-r border-slate-900 p-1.5 text-slate-600">{h.legalBasis}</td>
                           <td className="border-r border-slate-900 p-1.5 whitespace-pre-wrap">{h.currentSafetyMeasures}</td>
