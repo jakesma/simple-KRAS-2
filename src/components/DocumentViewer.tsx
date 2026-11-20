@@ -17,11 +17,21 @@ interface DocumentViewerProps {
   onCreateTbm: () => void;
   onEdit: () => void;
   onUpdateAssessment?: (updated: RiskAssessment) => void;
+  hasPaidPlan: boolean;
+  onUpgrade: () => void;
 }
 
 type DocumentTab = 'survey' | 'hazard' | 'estimation' | 'reduction' | 'kras';
 
-export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit, onUpdateAssessment }: DocumentViewerProps) {
+export default function DocumentViewer({
+  assessment,
+  onBack,
+  onCreateTbm,
+  onEdit,
+  onUpdateAssessment,
+  hasPaidPlan,
+  onUpgrade,
+}: DocumentViewerProps) {
   const [activeTab, setActiveTab] = useState<DocumentTab>('kras');
   const [copied, setCopied] = useState(false);
   const [includeWorkerSignatures, setIncludeWorkerSignatures] = useState(true);
@@ -352,20 +362,20 @@ export default function DocumentViewer({ assessment, onBack, onCreateTbm, onEdit
               {copied ? '복사됨!' : '마크다운 복사'}
             </button>
             <button
-              onClick={handleSaveAsCompanyTemplate}
+              onClick={hasPaidPlan ? handleSaveAsCompanyTemplate : onUpgrade}
               className="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-200 text-xs font-semibold transition cursor-pointer"
               id="doc-save-template-btn"
             >
               <CheckCircle2 size={14} />
-              {savedTplToast ? '템플릿 저장됨!' : '회사 템플릿 저장'}
+              {hasPaidPlan && savedTplToast ? '템플릿 저장됨!' : hasPaidPlan ? '회사 템플릿 저장' : '템플릿 저장 · PLUS'}
             </button>
             <button
-              onClick={handleExportExcel}
+              onClick={hasPaidPlan ? handleExportExcel : onUpgrade}
               className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold shadow transition cursor-pointer"
               id="doc-excel-btn"
             >
               <Download size={14} />
-              Excel 다운로드
+              {hasPaidPlan ? 'Excel 다운로드' : 'Excel 다운로드 · PLUS'}
             </button>
             <button
               onClick={handlePrint}

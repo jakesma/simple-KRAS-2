@@ -70,7 +70,23 @@ vercel
    VITE_CONSTRUCTION_FIREBASE_STORAGE_BUCKET = <건설 Firebase 스토리지 버킷>
    VITE_CONSTRUCTION_FIREBASE_MESSAGING_SENDER_ID = <건설 Firebase 발신자 ID>
    VITE_CONSTRUCTION_FIREBASE_APP_ID = <건설 Firebase 앱 ID>
+   VITE_PORTONE_STORE_ID = <PortOne Store ID>
+   VITE_PORTONE_CHANNEL_KEY = <KG이니시스 채널 키>
+   PORTONE_STORE_ID = <PortOne Store ID>
+   PORTONE_API_SECRET = <PortOne V2 API Secret>
+   PAYMENT_SESSION_SECRET = <32바이트 이상 무작위 서명 키>
    ```
+   `PORTONE_API_SECRET`과 `PAYMENT_SESSION_SECRET`에는 `VITE_` 접두사를
+   붙이지 마세요. `VITE_` 변수는 브라우저 번들에 포함됩니다.
+
+   서명 키는 다음 명령으로 생성할 수 있습니다.
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+   운영 환경에서는 `VITE_API_URL`을 설정하지 않습니다. 결제 검증 API와
+   HttpOnly 쿠키가 배포 도메인의 `/api/payments/*` 경로를 사용합니다.
 6. **Deploy** 버튼 클릭
 
 ## 🔒 Step 4: Firebase 보안 설정 업데이트
@@ -84,7 +100,7 @@ vercel
    - "Add domain" 클릭
    - 배포된 URL 추가 (예: `simple-kras.vercel.app`)
 
-### Firestore 보안 규칙 (선택사항)
+### Firestore 보안 규칙 (필수)
 ```javascript
 rules_version = '2';
 service cloud.firestore {
@@ -97,7 +113,7 @@ service cloud.firestore {
     
     // 사용자 정보
    match /constructionUsers/{userId} {
-      allow read, write: if request.auth.uid == userId;
+       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
@@ -111,6 +127,11 @@ service cloud.firestore {
 2. **회원가입** 테스트
 3. **평가 생성** 및 **Firestore 저장** 확인
 4. **모바일 반응형** 테스트
+5. `/api/payments/session` POST 요청이 200과 `kras_payment_session`
+   HttpOnly 쿠키를 반환하는지 확인
+6. KG이니시스 결제 완료 후 `/api/payments/verify`가 200을 반환하는지 확인
+7. 새로고침 후 `/api/payments/entitlement`가 `active: true`를 반환하는지 확인
+8. PortOne 관리자에서 결제를 취소한 뒤 새로고침하면 유료 이용권이 해제되는지 확인
 
 ## 🔄 Step 6: 자동 배포 설정 (선택사항)
 

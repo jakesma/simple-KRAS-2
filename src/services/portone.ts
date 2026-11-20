@@ -4,6 +4,7 @@
  */
 
 import * as PortOne from '@portone/browser-sdk/v2';
+import type { PaidPlanKey } from '../config/plans';
 
 export type KgInicisPayMethod = 
   | 'CARD'            // 신용/체크카드 (앱카드, ISP, 일반)
@@ -19,6 +20,7 @@ export interface CustomerInfo {
 }
 
 export interface PaymentRequestParams {
+  plan: PaidPlanKey;
   orderName: string;
   amount: number;
   payMethod: KgInicisPayMethod;
@@ -37,6 +39,7 @@ export interface PaymentSuccessResult {
   method: KgInicisPayMethod;
   paidAt: string;
   receiptUrl?: string;
+  expiresAt?: string;
 }
 
 export interface PaymentFailureResult {
@@ -47,9 +50,25 @@ export interface PaymentFailureResult {
 
 export type PaymentExecutionResult = PaymentSuccessResult | PaymentFailureResult;
 
+export interface VerifiedEntitlement {
+  paymentId: string;
+  transactionId: string;
+  orderName: string;
+  amount: number;
+  paidAt: string;
+  receiptUrl?: string;
+  plan: PaidPlanKey;
+  expiresAt: string;
+}
+
+export interface EntitlementResult {
+  active: boolean;
+  entitlement: VerifiedEntitlement | null;
+}
+
 // 고정된 포트원 Store ID 및 KG이니시스 Channel Key (영구 적용)
 export const DEFAULT_PORTONE_STORE_ID = 'store-6926905d-7ea7-4062-8309-61df1411c29b';
-export const DEFAULT_PORTONE_CHANNEL_KEY = 'channel-key-c65d82b3-22cc-4db4-9bce-3a8266440159';
+export const DEFAULT_PORTONE_CHANNEL_KEY = 'channel-key-882e0ba4-06a2-4129-bf5e-4e4c106c607c';
 
 export function getPortOneConfig(): { storeId: string; channelKey: string } {
   const envStoreId = (import.meta.env?.VITE_PORTONE_STORE_ID || '').trim();
@@ -72,6 +91,102 @@ export function isPortOneConfigured(): boolean {
   return true;
 }
 
+const API_BASE_URL = (import.meta.env?.VITE_API_URL || '').replace(/\/$/, '');
+
+async function parseApiResponse<T>(response: Response): Promise<T> {
+  const body = await response.json().catch(() => null) as {
+    message?: string;
+    code?: string;
+  } | null;
+  if (!response.ok) {
+    const error = new Error(body?.message || '결제 서버 요청에 실패했습니다.');
+    (error as Error & { code?: string }).code = body?.code;
+    throw error;
+  }
+  return body as T;
+}
+
+async function createPaymentSession(): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/api/payments/session`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const result = await parseApiResponse<{ success: true; customerId: string }>(response);
+  if (!result || typeof result.customerId !== 'string' || !result.customerId) {
+    throw new Error('결제 서버가 올바른 세션 정보를 반환하지 않았습니다.');
+  }
+  return result.customerId;
+}
+
+async function verifyPaymentOnServer(
+  paymentId: string,
+  transactionId: string | undefined,
+  plan: PaidPlanKey,
+): Promise<VerifiedEntitlement> {
+  const response = await fetch(`${API_BASE_URL}/api/payments/verify`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentId, transactionId, plan }),
+  });
+  const result = await parseApiResponse<{
+    success: true;
+    entitlement: VerifiedEntitlement;
+  }>(response);
+  if (!result?.entitlement || result.entitlement.paymentId !== paymentId) {
+    throw new Error('결제 서버의 검증 응답이 올바르지 않습니다.');
+  }
+  return result.entitlement;
+}
+
+export async function getVerifiedEntitlement(): Promise<EntitlementResult> {
+  const response = await fetch(`${API_BASE_URL}/api/payments/entitlement`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  });
+  const result = await parseApiResponse<{
+    success: true;
+    active: boolean;
+    entitlement: VerifiedEntitlement | null;
+  }>(response);
+  if (!result || typeof result.active !== 'boolean') {
+    throw new Error('이용권 서버 응답이 올바르지 않습니다.');
+  }
+  return {
+    active: result.active,
+    entitlement: result.entitlement,
+  };
+}
+
+export async function verifyRedirectedPayment(
+  paymentId: string,
+  plan: PaidPlanKey,
+): Promise<PaymentExecutionResult> {
+  try {
+    const verified = await verifyPaymentOnServer(paymentId, undefined, plan);
+    return {
+      success: true,
+      paymentId: verified.paymentId,
+      txId: verified.transactionId,
+      orderName: verified.orderName,
+      amount: verified.amount,
+      method: 'CARD',
+      paidAt: verified.paidAt,
+      receiptUrl: verified.receiptUrl,
+      expiresAt: verified.expiresAt,
+    };
+  } catch (error) {
+    const typedError = error as Error & { code?: string };
+    return {
+      success: false,
+      code: typedError.code || 'VERIFICATION_FAILED',
+      message: typedError.message,
+    };
+  }
+}
+
 /**
  * KG이니시스 일반결제창 호출 함수
  */
@@ -92,6 +207,7 @@ export async function requestKgInicisPayment(
   const uniquePaymentId = `kras-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 
   try {
+    const customerId = await createPaymentSession();
     const rawPhone = (params.customer.phoneNumber || '').replace(/[^0-9-]/g, '');
     const safePhone = /[0-9]{8,}/.test(rawPhone.replace(/-/g, '')) ? rawPhone : '010-0000-0000';
     const rawEmail = (params.customer.email || '').trim();
@@ -115,11 +231,12 @@ export async function requestKgInicisPayment(
       // 비실물(디지털) 장기 서비스
       productType: 'DIGITAL',
       customer: {
+        customerId,
         fullName: safeName,
         phoneNumber: safePhone,
         email: safeEmail,
       },
-      redirectUrl: `${window.location.origin}/`,
+      redirectUrl: `${window.location.origin}/?view=payment-${params.plan.toLowerCase()}&paymentId=${encodeURIComponent(uniquePaymentId)}`,
     };
 
     // 서비스 제공기간 (KG이니시스 장기 서비스 필수)
@@ -162,15 +279,22 @@ export async function requestKgInicisPayment(
       };
     }
 
+    const verified = await verifyPaymentOnServer(
+      uniquePaymentId,
+      (response as any)?.txId || (response as any)?.paymentId,
+      params.plan,
+    );
+
     return {
       success: true,
-      paymentId: uniquePaymentId,
-      txId: (response as any)?.txId || (response as any)?.paymentId || uniquePaymentId,
-      orderName: params.orderName,
-      amount: params.amount,
+      paymentId: verified.paymentId,
+      txId: verified.transactionId,
+      orderName: verified.orderName,
+      amount: verified.amount,
       method: params.payMethod,
-      paidAt: new Date().toISOString(),
-      receiptUrl: (response as any)?.receiptUrl
+      paidAt: verified.paidAt,
+      receiptUrl: verified.receiptUrl,
+      expiresAt: verified.expiresAt,
     };
   } catch (error: any) {
     console.error('KG이니시스 PortOne 결제 처리 에러:', error);

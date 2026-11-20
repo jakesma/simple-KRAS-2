@@ -15,6 +15,7 @@ import PlusPaymentPage from './components/PlusPaymentPage';
 import ProPaymentPage from './components/ProPaymentPage';
 import ProWorkspaceHub, { ProHubTab, CompanyTemplateItem } from './components/ProWorkspaceHub';
 import { PAID_PLANS, PaidPlanKey } from './config/plans';
+import { getVerifiedEntitlement } from './services/portone';
 import CategorySelector from './components/CategorySelector';
 import { ConstructionSubCategory, createConstructionProcess, createConstructionProcesses, createElectricalStandardProcesses } from './data/constructionCategories';
 import { ShieldCheck, Layers, Info, LogOut, Zap, BarChart3, Building2, BookmarkCheck, Users, Headphones } from 'lucide-react';
@@ -226,9 +227,19 @@ export default function App() {
     const plan = (params.get('plan') || '').toLowerCase();
     return view === 'payment-pro' || plan === 'pro' ? 'Pro' : 'Plus';
   });
-  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(() => {
-    return typeof window !== 'undefined' ? localStorage.getItem('kras_subscription_plan') : null;
-  });
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.removeItem('kras_subscription_plan');
+    localStorage.removeItem('kras_subscription_paid_at');
+
+    void getVerifiedEntitlement().then((result) => {
+      setSubscriptionPlan(result.active ? result.entitlement?.plan || null : null);
+    }).catch((error) => {
+      console.error('이용권 서버 검증 실패:', error);
+      setSubscriptionPlan(null);
+    });
+  }, []);
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -329,8 +340,24 @@ export default function App() {
     }
   };
 
+  const canCreateAssessment = () => {
+    if (subscriptionPlan === 'Plus' || subscriptionPlan === 'Pro') return true;
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const monthlyCreations = assessments.filter((assessment) =>
+      assessment.id.startsWith('assess_')
+      && assessment.createdAt.startsWith(currentMonth)
+    ).length;
+    if (monthlyCreations < 5) return true;
+
+    setPaymentPlan('Plus');
+    setShowPayment(true);
+    return false;
+  };
+
   // Create new blank assessment
   const handleCreateNew = () => {
+    if (!canCreateAssessment()) return;
+
     const newAssess: RiskAssessment = {
       id: `assess_${Date.now()}`,
       title: `${new Date().getFullYear()}년도 신규 건설현장 수시 위험성평가`,
@@ -371,6 +398,8 @@ export default function App() {
 
   // Re-use and revision handler (SME/Consultant crucial feature)
   const handleDuplicate = (id: string) => {
+    if (!canCreateAssessment()) return;
+
     const original = assessments.find(a => a.id === id);
     if (!original) return;
 
@@ -500,6 +529,8 @@ export default function App() {
     return (
       <CategorySelector
         onSelectCategory={(category: ConstructionSubCategory) => {
+          if (!canCreateAssessment()) return;
+
           // Create a new assessment with the selected category
           setShowCategorySelector(false);
           setShowLanding(false);
@@ -547,8 +578,6 @@ export default function App() {
             setIsGuestMode(true);
           }
           setSubscriptionPlan(paymentPlan);
-          localStorage.setItem('kras_subscription_plan', paymentPlan);
-          localStorage.setItem('kras_subscription_paid_at', new Date().toISOString());
           localStorage.setItem('kras_subscription_order_id', result.paymentId);
           if (result.orderName) {
             localStorage.setItem('kras_subscription_order_name', result.orderName);
@@ -652,6 +681,11 @@ export default function App() {
                 <button
                   key={item.id}
                   onClick={() => {
+                    if (subscriptionPlan !== 'Pro') {
+                      setPaymentPlan('Pro');
+                      setShowPayment(true);
+                      return;
+                    }
                     setActiveTab('pro-hub');
                     setProHubTab(item.id);
                     setEditingAssessmentId(null);
@@ -748,6 +782,11 @@ export default function App() {
               setViewingAssessmentId(null);
             }}
             onUpdateAssessment={(updated) => handleSave(updated)}
+            hasPaidPlan={subscriptionPlan === 'Plus' || subscriptionPlan === 'Pro'}
+            onUpgrade={() => {
+              setPaymentPlan('Plus');
+              setShowPayment(true);
+            }}
           />
         ) : activeEditing ? (
           <AssessmentForm
@@ -756,7 +795,7 @@ export default function App() {
             onBack={() => setEditingAssessmentId(null)}
             onLogAudit={handleLogAudit}
           />
-        ) : activeTab === 'pro-hub' ? (
+        ) : activeTab === 'pro-hub' && subscriptionPlan === 'Pro' ? (
           <ProWorkspaceHub
             activeSubTab={proHubTab}
             onChangeSubTab={(tab) => setProHubTab(tab)}
@@ -824,6 +863,11 @@ export default function App() {
             onDelete={handleDelete}
             subscriptionPlan={subscriptionPlan}
             onOpenProFeature={(tab) => {
+              if (subscriptionPlan !== 'Pro') {
+                setPaymentPlan('Pro');
+                setShowPayment(true);
+                return;
+              }
               setProHubTab(tab);
               setActiveTab('pro-hub');
             }}

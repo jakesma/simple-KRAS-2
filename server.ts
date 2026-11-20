@@ -8,6 +8,11 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
+import {
+  handlePaymentEntitlement,
+  handlePaymentSession,
+  handlePaymentVerification,
+} from './server/payments';
 
 // Load environment variables
 dotenv.config();
@@ -44,6 +49,10 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+
+  app.post('/api/payments/session', handlePaymentSession);
+  app.post('/api/payments/verify', handlePaymentVerification);
+  app.get('/api/payments/entitlement', handlePaymentEntitlement);
 
   // API Route: Health Check
   app.get('/api/health', (req, res) => {

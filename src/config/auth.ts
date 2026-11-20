@@ -18,35 +18,6 @@ export interface AuthUser {
   photoURL: string | null;
 }
 
-const MEMBER_SESSION_STORAGE_KEY = 'kras_member_session_v1';
-const authListeners = new Set<(user: AuthUser | null) => void>();
-
-function getStoredMemberSession(): AuthUser | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(MEMBER_SESSION_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as AuthUser) : null;
-  } catch {
-    return null;
-  }
-}
-
-function setStoredMemberSession(user: AuthUser | null) {
-  if (typeof window === 'undefined') return;
-  try {
-    if (user) {
-      localStorage.setItem(MEMBER_SESSION_STORAGE_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(MEMBER_SESSION_STORAGE_KEY);
-    }
-  } catch {}
-  authListeners.forEach((cb) => {
-    try {
-      cb(user);
-    } catch {}
-  });
-}
-
 // Error message mapping for better UX
 const getErrorMessage = (error: AuthError): string => {
   const errorMessages: { [key: string]: string } = {
@@ -88,29 +59,19 @@ export const signUp = async (
       displayName: userCredential.user.displayName || displayName,
       photoURL: userCredential.user.photoURL,
     };
-    setStoredMemberSession(authUser);
-
     return {
       success: true,
       user: authUser,
     };
-  } catch {
-    // 심사 기간 중 이미 존재하는 이메일이거나 네트워크 제한 시에도 즉시 회원 세션으로 정상 가입/접속 보장
-    const fallbackUser: AuthUser = {
-      uid: `member_${Date.now()}`,
-      email: normalizedEmail,
-      displayName: displayName.trim() || normalizedEmail.split('@')[0],
-      photoURL: null,
-    };
-    setStoredMemberSession(fallbackUser);
+  } catch (error) {
     return {
-      success: true,
-      user: fallbackUser,
+      success: false,
+      error: getErrorMessage(error as AuthError),
     };
   }
 };
 
-// Sign in with email and password (심사 기간 중 계정 접속 100% 보장)
+// Sign in with email and password
 export const signIn = async (
   email: string,
   password: string
@@ -126,26 +87,14 @@ export const signIn = async (
       displayName: userCredential.user.displayName || trimmedId.split('@')[0],
       photoURL: userCredential.user.photoURL,
     };
-    setStoredMemberSession(authUser);
-
     return {
       success: true,
       user: authUser,
     };
-  } catch {
-    // 내부심사 및 카드사 심사 시 어떤 테스트 계정(ID/이메일/비밀번호)으로 로그인하더라도
-    // 접속 불가로 반려되지 않도록 상시 회원 로그인 세션을 활성화합니다.
-    const fallbackUser: AuthUser = {
-      uid: `member_${trimmedId.replace(/[^a-zA-Z0-9]/g, '_') || 'reviewer'}`,
-      email: normalizedEmail,
-      displayName: trimmedId.includes('@') ? trimmedId.split('@')[0] : trimmedId || '심사담당자',
-      photoURL: null,
-    };
-    setStoredMemberSession(fallbackUser);
-
+  } catch (error) {
     return {
-      success: true,
-      user: fallbackUser,
+      success: false,
+      error: getErrorMessage(error as AuthError),
     };
   }
 };
@@ -163,8 +112,6 @@ export const signInWithGoogle = async () => {
       displayName: userCredential.user.displayName,
       photoURL: userCredential.user.photoURL,
     };
-    setStoredMemberSession(authUser);
-
     return {
       success: true,
       user: authUser,
@@ -179,12 +126,14 @@ export const signInWithGoogle = async () => {
 
 // Sign out
 export const logOut = async () => {
-  setStoredMemberSession(null);
   try {
     await signOut(auth);
     return { success: true };
-  } catch {
-    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error as AuthError),
+    };
   }
 };
 
@@ -215,36 +164,21 @@ export const getCurrentUser = (): AuthUser | null => {
       photoURL: user.photoURL,
     };
   }
-  return getStoredMemberSession();
+  return null;
 };
 
 // Subscribe to auth state changes
 export const onAuthStateChanged = (callback: (user: AuthUser | null) => void) => {
-  authListeners.add(callback);
-
-  const stored = getStoredMemberSession();
-  if (stored) {
-    callback(stored);
-  }
-
-  const unsubscribeFirebase = auth.onAuthStateChanged((user) => {
+  return auth.onAuthStateChanged((user) => {
     if (user) {
-      const authUser: AuthUser = {
+      callback({
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
-      };
-      setStoredMemberSession(authUser);
-      callback(authUser);
+      });
     } else {
-      const fallback = getStoredMemberSession();
-      callback(fallback);
+      callback(null);
     }
   });
-
-  return () => {
-    authListeners.delete(callback);
-    unsubscribeFirebase();
-  };
 };

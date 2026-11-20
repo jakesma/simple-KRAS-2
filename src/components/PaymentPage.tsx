@@ -12,8 +12,6 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowLeft,
-  Settings,
-  ExternalLink,
   Lock,
   Zap,
   Building2,
@@ -23,9 +21,7 @@ import { getCurrentUser } from '../config/auth';
 import { PAID_PLANS, PaidPlanKey } from '../config/plans';
 import { 
   requestKgInicisPayment, 
-  getPortOneConfig, 
-  savePortOneConfig, 
-  isPortOneConfigured,
+  verifyRedirectedPayment,
   KgInicisPayMethod,
   PaymentSuccessResult,
   PaymentFailureResult 
@@ -62,26 +58,33 @@ export default function PaymentPage({
   const [customerEmail, setCustomerEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
 
-  // 포트원 연동 설정 모달
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [storeIdInput, setStoreIdInput] = useState('');
-  const [channelKeyInput, setChannelKeyInput] = useState('');
-  const [configured, setConfigured] = useState(true);
   const [agreedPolicy, setAgreedPolicy] = useState(false);
 
-  // 초기 사용자 정보 및 포트원 설정 로드
+  // 초기 사용자 정보 로드 및 모바일 리디렉션 결제 검증
   useEffect(() => {
     const user = getCurrentUser();
     if (user) {
       if (user.displayName) setCustomerName(user.displayName);
       if (user.email) setCustomerEmail(user.email);
     }
-    
-    const config = getPortOneConfig();
-    setStoreIdInput(config.storeId);
-    setChannelKeyInput(config.channelKey);
-    setConfigured(isPortOneConfigured());
-  }, []);
+    const redirectedPaymentId = new URLSearchParams(window.location.search).get('paymentId');
+    if (redirectedPaymentId && planKey) {
+      setIsProcessing(true);
+      void verifyRedirectedPayment(redirectedPaymentId, planKey).then((result) => {
+        if (result.success) {
+          setCompletedPayment(result);
+          onSuccess?.(result);
+          window.history.replaceState({}, '', window.location.pathname);
+        } else if ('message' in result) {
+          setErrorMessage(result.message);
+        }
+      }).catch((error: Error) => {
+        setErrorMessage(error.message || '리디렉션 결제 확인 중 오류가 발생했습니다.');
+      }).finally(() => {
+        setIsProcessing(false);
+      });
+    }
+  }, [planKey]);
 
   const paymentMethods: {
     id: KgInicisPayMethod;
@@ -124,12 +127,6 @@ export default function PaymentPage({
     },
   ];
 
-  const handleSaveConfig = () => {
-    savePortOneConfig(storeIdInput, channelKeyInput);
-    setConfigured(isPortOneConfigured());
-    setShowConfigModal(false);
-  };
-
   const handleExecutePayment = async () => {
     const effectiveName = customerName.trim() || '비회원 구매자';
     const effectivePhone = customerPhone.trim() || '010-0000-0000';
@@ -150,6 +147,7 @@ export default function PaymentPage({
       };
 
       const result = await requestKgInicisPayment({
+        plan: planKey || 'Plus',
         orderName: description,
         amount,
         payMethod: selectedMethod,
@@ -189,28 +187,6 @@ export default function PaymentPage({
     if (!customerEmail.trim()) setCustomerEmail('guest@simplekrascon.xyz');
     setAgreedPolicy(true);
     setErrorMessage(null);
-  };
-
-  const handleSimulateTestPayment = () => {
-    if (!customerName.trim()) setCustomerName('비회원 구매자');
-    if (!customerPhone.trim()) setCustomerPhone('010-0000-0000');
-
-    setErrorMessage(null);
-    const testResult: PaymentSuccessResult = {
-      success: true,
-      paymentId: `kras-test-${Date.now()}`,
-      txId: `tx-test-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
-      orderName: description,
-      amount,
-      method: selectedMethod,
-      paidAt: new Date().toISOString(),
-      receiptUrl: 'https://iniweb.inicis.com/DefaultSettings/receipt'
-    };
-
-    setCompletedPayment(testResult);
-    if (onSuccess) {
-      onSuccess(testResult);
-    }
   };
 
   // 결제 완료 화면
@@ -308,41 +284,13 @@ export default function PaymentPage({
           </div>
         </div>
 
-        {/* 연동 준비 상태 안내 배너 */}
-        <div className={`p-4 rounded-xl border mb-6 flex items-start gap-3 ${
-          configured 
-            ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' 
-            : 'bg-amber-50/90 border-amber-200 text-amber-900'
-        }`}>
+        <div className="p-4 rounded-xl border mb-6 flex items-start gap-3 bg-emerald-50/80 border-emerald-200 text-emerald-900">
           <div className="mt-0.5">
-            {configured ? (
-              <ShieldCheck className="text-emerald-600" size={20} />
-            ) : (
-              <AlertCircle className="text-amber-600" size={20} />
-            )}
+            <ShieldCheck className="text-emerald-600" size={20} />
           </div>
           <div className="flex-1 text-xs leading-relaxed">
-            {configured ? (
-              <div>
-                <p className="font-bold text-sm mb-0.5">KG이니시스 PG 실시간 결제 연동 활성화</p>
-                <p className="text-emerald-700">포트원(PortOne) 공식 SDK를 통해 KG이니시스 결제창이 안전하게 실행됩니다.</p>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center justify-between">
-                  <p className="font-bold text-sm mb-0.5">포트원(PortOne) KG이니시스 연동 대기 중</p>
-                  <button 
-                    onClick={() => setShowConfigModal(true)}
-                    className="underline font-bold text-amber-800 hover:text-amber-900"
-                  >
-                    연동 키 입력하기 →
-                  </button>
-                </div>
-                <p className="text-amber-700">
-                  <a href="https://admin.portone.io" target="_blank" rel="noopener noreferrer" className="underline font-medium">PortOne 관리자 콘솔</a>에서 발급받은 <strong>Store ID</strong>와 <strong>Channel Key</strong>를 설정하시면 실제 결제창이 연동됩니다.
-                </p>
-              </div>
-            )}
+            <p className="font-bold text-sm mb-0.5">KG이니시스 PG 서버 검증 결제 활성화</p>
+            <p className="text-emerald-700">결제 완료 후 PortOne 서버 API에서 결제 상태와 금액을 다시 확인한 경우에만 이용권이 활성화됩니다.</p>
           </div>
         </div>
 
@@ -597,113 +545,8 @@ export default function PaymentPage({
             )}
           </button>
 
-          {/* 테스트 검증용 시뮬레이션 버튼 */}
-          <div className="pt-2 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={handleSimulateTestPayment}
-              className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs transition border border-slate-300 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
-              title="실제 카드 청구 없이 결제 완료 화면, 영수증 생성, 비회원 권한 승격 및 대시보드 연동을 즉시 테스트합니다"
-            >
-              <span>🧪 결제 프로세스 가상 테스트 (시뮬레이션 승인)</span>
-            </button>
-            <p className="text-[11px] text-center text-slate-400 mt-1">
-              * 가상 테스트를 통해 결제 완료 후 대시보드 자동 승격 및 보고서 출력 권한 활성화를 즉시 확인할 수 있습니다.
-            </p>
-          </div>
         </div>
       </div>
-
-      {/* 포트원 연동 정보 설정 모달 */}
-      {showConfigModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
-              <div className="flex items-center gap-2">
-                <Settings size={20} className="text-blue-600" />
-                <h3 className="font-bold text-base text-slate-900">포트원 (PortOne) 연동 설정</h3>
-              </div>
-              <button
-                onClick={() => setShowConfigModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg leading-none p-1"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-              <a 
-                href="https://admin.portone.io/application/list" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 font-bold hover:underline inline-flex items-center gap-1"
-              >
-                PortOne 관리자 콘솔 <ExternalLink size={12} />
-              </a>
-              에서 발급받으신 식별코드를 등록하시면 실제 KG이니시스 결제가 바로 작동합니다.
-            </p>
-
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Store ID (가맹점 / 고객사 식별코드)
-                </label>
-                <input
-                  type="text"
-                  placeholder="예: store-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  value={storeIdInput}
-                  onChange={(e) => setStoreIdInput(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-mono border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
-                />
-                <p className="text-[11px] text-slate-400 mt-1">포트원 콘솔 &gt; 결제 연동 &gt; 식별·인증정보에서 확인 가능</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Channel Key (KG이니시스 채널 키)
-                </label>
-                <input
-                  type="text"
-                  placeholder="예: channel-key-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  value={channelKeyInput}
-                  onChange={(e) => setChannelKeyInput(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-mono border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
-                />
-                <p className="text-[11px] text-slate-400 mt-1">포트원 콘솔 &gt; 결제 연동 &gt; 채널 관리 (KG이니시스)에서 확인</p>
-              </div>
-
-            </div>
-
-            <div className="flex gap-2 mb-3">
-              <button
-                type="button"
-                onClick={() => setShowConfigModal(false)}
-                className="flex-1 py-2.5 text-xs font-semibold text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
-              >
-                닫기
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveConfig}
-                className="flex-1 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition"
-              >
-                설정 저장
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowConfigModal(false);
-                handleSimulateTestPayment();
-              }}
-              className="w-full py-2 px-3 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition border border-dashed border-slate-300"
-            >
-              🧪 키 입력 없이 가상 테스트 결제 바로 승인하기
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
