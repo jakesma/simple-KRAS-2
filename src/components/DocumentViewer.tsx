@@ -334,6 +334,15 @@ export default function DocumentViewer({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const legalDisclaimer = (
+    <div className="mt-5 pt-3 border-t border-slate-300 text-[10px] leading-relaxed text-slate-400 font-sans print:text-slate-600" id="legal-disclaimer">
+      <span className="font-semibold text-slate-600 block mb-0.5 print:text-black">◆ 법적 고지 및 면책 조항 (AI Disclaimer) :</span>
+      본 보고서는 안전관리 자동화 지원 도구를 통해 생성되었으며, 위험도 결정 및 법적 근거는 참고용 템플릿입니다.
+      위험성평가의 정당성 확보 및 실행의 책임은 대한민국 산업안전보건법에 따라 보고서 상단에 최종 날인/서명한 **당해 사업장의 경영책임자 및 대표이사**에게 귀속되며,
+      보고서 내 기재된 안전보건 조치 이행여부는 반드시 사업장 자체 안전점검 및 근로자 회의 등 인간 주체의 추가 정밀 검토를 필한 후 최종 집행되어야 합니다.
+    </div>
+  );
+
   return (
     <div className="bg-white min-h-screen pb-16" id="document-viewer-container">
       {/* Document Control Header (Hidden on Print) */}
@@ -1213,18 +1222,13 @@ export default function DocumentViewer({
                   </div>
                 </div>
 
+                {legalDisclaimer}
               </div>
             )}
           </div>
         )}
 
-          {/* Legal Footnote Warning Disclaimer (Required by PRD constraints) */}
-          <div className="mt-12 pt-6 border-t border-slate-300 text-[10px] leading-relaxed text-slate-400 font-sans print:text-slate-600" id="legal-disclaimer">
-            <span className="font-semibold text-slate-600 block mb-0.5 print:text-black">◆ 법적 고지 및 면책 조항 (AI Disclaimer) :</span>
-            본 보고서는 안전관리 자동화 지원 도구를 통해 생성되었으며, 위험도 결정 및 법적 근거는 참고용 템플릿입니다. 
-            위험성평가의 정당성 확보 및 실행의 책임은 대한민국 산업안전보건법에 따라 보고서 상단에 최종 날인/서명한 **당해 사업장의 경영책임자 및 대표이사**에게 귀속되며, 
-            보고서 내 기재된 안전보건 조치 이행여부는 반드시 사업장 자체 안전점검 및 근로자 회의 등 인간 주체의 추가 정밀 검토를 필한 후 최종 집행되어야 합니다.
-          </div>
+          {(!includePhotoSheet || activeTab !== 'kras') && legalDisclaimer}
 
         </div>
       </div>

@@ -114,6 +114,8 @@ test.describe('KRAS App basic flows', () => {
 
     const orientation = page.locator('#print-orientation-select');
     await expect(orientation).toHaveValue('landscape');
+    await expect(page.locator('#photo-sheet-section #legal-disclaimer')).toHaveCount(1);
+    await expect(page.locator('#legal-disclaimer')).toHaveCount(1);
 
     await page.evaluate(() => {
       (window as Window & { __printCapture?: { orientation?: string; pageRule?: string } }).print = () => {
