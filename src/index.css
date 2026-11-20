@@ -204,10 +204,15 @@ body {
   #photo-sheet-section {
     break-before: page !important;
     page-break-before: always !important;
-    padding-top: 8mm !important;
+    padding-top: 4mm !important;
     margin-top: 0 !important;
     break-inside: auto !important;
     page-break-inside: auto !important;
+  }
+
+  #photo-sheet-section > div:first-child {
+    margin-bottom: 5px !important;
+    padding-bottom: 4px !important;
   }
 
   /* Photo cards: two columns side by side on one portrait page */
@@ -221,7 +226,7 @@ body {
   }
 
   #photo-cards-grid > div {
-    padding: 6px !important;
+    padding: 4px !important;
     min-width: 0 !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
@@ -236,7 +241,13 @@ body {
   }
 
   html[data-print-orientation="landscape"] #photo-cards-grid [class*="aspect-"] {
-    aspect-ratio: 4 / 3 !important;
+    aspect-ratio: auto !important;
+    height: 58mm !important;
+  }
+
+  html[data-print-orientation="portrait"] #photo-cards-grid [class*="aspect-"] {
+    aspect-ratio: auto !important;
+    height: 78mm !important;
   }
 
   #photo-cards-grid img {
@@ -251,7 +262,7 @@ body {
   }
 
   #photo-cards-grid textarea {
-    height: 60px !important;
+    height: 34px !important;
     overflow: hidden !important;
   }
 
@@ -260,16 +271,35 @@ body {
   }
 
   #photo-sheet-info-table {
-    margin-bottom: 8px !important;
-    font-size: 9.5px !important;
+    margin-bottom: 5px !important;
+    font-size: 9px !important;
   }
 
   #photo-sheet-info-table th,
   #photo-sheet-info-table td {
-    padding: 3px 5px !important;
+    padding: 2px 4px !important;
   }
 
   #photo-sheet-section input[type="date"] {
     font-size: 9.5px !important;
+  }
+
+  #photo-sheet-confirmation {
+    margin-top: 5px !important;
+    padding: 4px 6px !important;
+    gap: 6px !important;
+    font-size: 8px !important;
+    line-height: 1.15 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #photo-sheet-section #legal-disclaimer {
+    margin-top: 4px !important;
+    padding-top: 3px !important;
+    font-size: 7px !important;
+    line-height: 1.1 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 }

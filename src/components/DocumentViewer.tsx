@@ -1212,7 +1212,7 @@ export default function DocumentViewer({
                 </div>
 
                 {/* Photo Sheet Footer Confirmation & Stamp Box */}
-                <div className="mt-5 border border-slate-900 p-3 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="mt-5 border border-slate-900 p-3 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" id="photo-sheet-confirmation">
                   <div className="text-slate-600 leading-relaxed text-[11px]">
                     <span className="font-bold text-slate-900">확인 증빙:</span> 본 사진대지는 위 위험성평가표에 명시된 유해위험요인의 실제 현장 확인 및 위험성 감소대책 이행 결과를 증명합니다.
                   </div>
